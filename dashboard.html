@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sales.Cockpit – peoples fitness</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#F5F4F0;--bg2:#ECEAE4;--bg3:#E2DFD8;--card:#FFFFFF;--border:#D8D5CE;--text:#1A1916;--text2:#5A5750;--text3:#9A958C;--green:#2F7D32;--green-bg:#E8F5E9;--red:#C62828;--red-bg:#FFEBEE;--orange:#E65100;--orange-bg:#FFF3E0;--blue:#1A4A7A;--blue-bg:#EBF4FF;--col-bh:#1A4A7A;--col-ka:#2E7D32;--col-ro:#6A1B9A;--radius:12px;--radius-sm:7px;--shadow:0 1px 3px rgba(0,0,0,0.08);--shadow-md:0 4px 16px rgba(0,0,0,0.1);}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;}
+  .header{background:var(--card);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:58px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow);}
+  .logo{font-size:16px;font-weight:600;letter-spacing:-0.3px;}
+  .logo span{color:var(--col-bh);}
+  .header-nav{display:flex;gap:2px;align-items:center;}
+  .hn{padding:6px 16px;font-size:13px;font-weight:500;background:transparent;border:none;border-radius:var(--radius-sm);cursor:pointer;color:var(--text2);font-family:'DM Sans',sans-serif;transition:all .15s;}
+  .hn:hover{background:var(--bg2);color:var(--text);}
+  .hn.active{background:var(--text);color:#fff;}
+  .btn-info{padding:6px 14px;font-size:13px;font-weight:500;background:transparent;color:var(--text2);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;}
+  .btn-info:hover{background:var(--bg2);}
+  .btn-refresh{padding:6px 12px;font-size:13px;background:transparent;color:var(--col-bh);border:1px solid #BBDEFB;border-radius:var(--radius-sm);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;}
+  .btn-refresh:hover{background:var(--blue-bg);}
+  .main{max-width:1120px;margin:0 auto;padding:24px 20px 60px;}
+  .sec{display:none;}.sec.active{display:block;}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px;box-shadow:var(--shadow);}
+  .loading{text-align:center;padding:40px;color:var(--text3);font-size:14px;}
+  .spinner{display:inline-block;width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--col-bh);border-radius:50%;animation:spin .6s linear infinite;margin-right:8px;vertical-align:middle;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:20px;}
+  .kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow);}
+  .kpi-lbl{font-size:11px;color:var(--text3);font-weight:500;letter-spacing:0.3px;text-transform:uppercase;margin-bottom:6px;}
+  .kpi-val{font-size:28px;font-weight:600;color:var(--text);font-family:'DM Mono',monospace;letter-spacing:-1px;}
+  .kpi-note{font-size:10px;color:var(--text3);margin-top:3px;}
+  .kpi-verlust{background:var(--red-bg);border-color:#FFCDD2;}
+  .kpi-verlust .kpi-val{color:var(--red);}
+  .kpi-verlust .kpi-lbl{color:var(--red);}
+  .stabs{display:flex;gap:6px;flex-wrap:wrap;}
+  .stab{padding:5px 16px;font-size:13px;border:1px solid var(--border);border-radius:999px;cursor:pointer;background:var(--card);color:var(--text2);font-family:'DM Sans',sans-serif;transition:all .15s;}
+  .stab:hover{background:var(--bg2);}
+  .stab.active{background:var(--text);color:#fff;border-color:var(--text);}
+  .stab.s-bh.active{background:var(--col-bh);border-color:var(--col-bh);}
+  .stab.s-ka.active{background:var(--col-ka);border-color:var(--col-ka);}
+  .stab.s-ro.active{background:var(--col-ro);border-color:var(--col-ro);}
+  .typ-pills{display:flex;gap:6px;flex-wrap:wrap;}
+  .typ-pill{padding:4px 12px;font-size:12px;font-weight:500;border-radius:999px;border:1px solid var(--border);background:var(--card);color:var(--text2);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;}
+  .typ-pill.active{background:var(--text);color:#fff;border-color:var(--text);}
+  .dash-toolbar{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:16px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;box-shadow:var(--shadow);}
+  .toolbar-divider{width:1px;height:24px;background:var(--border);}
+  .filter-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;}
+  .filter-bar select,.filter-bar input{padding:7px 10px;font-size:13px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--card);color:var(--text);font-family:'DM Sans',sans-serif;cursor:pointer;appearance:none;-webkit-appearance:none;}
+  .filter-bar input{max-width:190px;}
+  .charts-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+  .chart-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);}
+  .chart-title{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:14px;}
+  .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+  .bar-lbl{font-size:12px;color:var(--text2);min-width:80px;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bar-track{flex:1;height:8px;background:var(--bg2);border-radius:4px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:4px;transition:width .4s ease;}
+  .bar-pct{font-size:12px;font-weight:600;min-width:36px;text-align:right;font-family:'DM Mono',monospace;}
+  .bar-cnt{font-size:11px;color:var(--text3);min-width:50px;font-family:'DM Mono',monospace;}
+  .rev-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .rev-bar-lbl{font-size:12px;color:var(--text2);min-width:90px;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500;}
+  .rev-bar-track{flex:1;height:10px;background:var(--bg2);border-radius:5px;overflow:hidden;}
+  .rev-bar-fill{height:100%;border-radius:5px;transition:width .4s;}
+  .rev-bar-val{font-size:12px;font-weight:600;min-width:68px;text-align:right;font-family:'DM Mono',monospace;}
+  .verlust-card{background:var(--red-bg);border:1px solid #FFCDD2;border-radius:var(--radius);padding:20px;margin-bottom:16px;box-shadow:var(--shadow);}
+  .verlust-title{font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:14px;}
+  .table-wrap{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{text-align:left;font-weight:600;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.4px;padding:8px 12px;border-bottom:1px solid var(--border);}
+  td{padding:9px 12px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:var(--bg);}
+  .badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:500;}
+  .b-ja{background:var(--green-bg);color:var(--green);}
+  .b-nein{background:var(--red-bg);color:var(--red);}
+  .b-nt{background:var(--orange-bg);color:var(--orange);}
+  .b-abs{background:var(--bg2);color:var(--text2);}
+  .b-typ-pt{background:#E3F2FD;color:#1565C0;font-size:10px;}
+  .b-typ-wp{background:#E8EAF6;color:#283593;font-size:10px;}
+  .b-typ-wi{background:#FFF8E1;color:#E65100;font-size:10px;}
+  .btn{padding:8px 18px;font-size:13px;font-weight:500;background:var(--text);color:#fff;border:none;border-radius:var(--radius-sm);cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .15s;}
+  .btn:hover{background:#3A3835;}
+  .btn-out{padding:7px 14px;font-size:13px;font-weight:500;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;}
+  .btn-out:hover{background:var(--bg2);}
+  .btn-edit{padding:4px 9px;font-size:11px;background:transparent;color:var(--blue);border:1px solid #BBDEFB;border-radius:var(--radius-sm);cursor:pointer;}
+  .btn-edit:hover{background:var(--blue-bg);}
+  .btn-del{padding:4px 9px;font-size:11px;background:transparent;color:var(--red);border:1px solid #FFCDD2;border-radius:var(--radius-sm);cursor:pointer;}
+  .btn-del:hover{background:var(--red-bg);}
+  .btn-danger{padding:7px 14px;font-size:13px;background:transparent;color:var(--red);border:1px solid #FFCDD2;border-radius:var(--radius-sm);cursor:pointer;font-family:'DM Sans',sans-serif;}
+  .btn-danger:hover{background:var(--red-bg);}
+  .pag{display:flex;gap:8px;justify-content:flex-end;align-items:center;padding:10px 0 0;}
+  .pag-info{font-size:12px;color:var(--text3);font-family:'DM Mono',monospace;}
+  .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:200;align-items:center;justify-content:center;padding:20px;}
+  .modal-bg.open{display:flex;}
+  .modal{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);padding:24px;width:100%;max-width:520px;box-shadow:var(--shadow-md);}
+  .modal-title{font-size:16px;font-weight:600;margin-bottom:18px;}
+  .modal-actions{display:flex;gap:10px;margin-top:18px;justify-content:flex-end;}
+  .form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+  .fg{display:flex;flex-direction:column;gap:5px;}
+  .fg label{font-size:12px;font-weight:600;color:var(--text2);}
+  .fg input,.fg select,.fg textarea{padding:9px 11px;font-size:13px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;appearance:none;-webkit-appearance:none;}
+  .fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--text);}
+  .fg textarea{resize:vertical;min-height:60px;}
+  .tags{display:flex;flex-wrap:wrap;gap:6px;min-height:36px;margin-bottom:14px;}
+  .tag{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:999px;font-size:12px;}
+  .tag-x{cursor:pointer;color:var(--text3);font-size:15px;line-height:1;}
+  .tag-x:hover{color:var(--red);}
+  .legend{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px;font-size:11px;color:var(--text2);}
+  .leg{display:flex;align-items:center;gap:4px;}
+  .leg-dot{width:9px;height:9px;border-radius:2px;}
+  .grund-cell{font-size:11px;color:var(--text3);font-style:italic;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .info-modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:300;align-items:center;justify-content:center;padding:20px;}
+  .info-modal-bg.open{display:flex;}
+  .info-modal{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);padding:24px;width:100%;max-width:360px;box-shadow:var(--shadow-md);}
+  .auto-refresh{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:5px;}
+  @media(max-width:700px){.charts-row,.form-grid-2{grid-template-columns:1fr;}.header{flex-wrap:wrap;height:auto;padding:10px 16px;gap:8px;}.main{padding:16px 12px 60px;}.dash-toolbar{flex-direction:column;align-items:flex-start;gap:10px;}.toolbar-divider{display:none;}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <div class="logo">Sales<span>.</span>Cockpit</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:1px">peoples fitness</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:6px;">
+    <div class="auto-refresh" id="last-update">–</div>
+    <button class="btn-refresh" onclick="loadData(true)">⟳ Aktualisieren</button>
+    <div class="header-nav">
+      <button class="hn active" onclick="nav('dash',this)">Dashboard</button>
+      <button class="hn" onclick="nav('liste',this)">Einträge</button>
+      <button class="hn" onclick="nav('ma',this)">Mitarbeiter</button>
+    </div>
+    <button class="btn-info" onclick="document.getElementById('infoModal').classList.add('open')">ℹ Info</button>
+  </div>
+</div>
+
+<div class="main">
+
+<div id="sec-dash" class="sec active">
+  <div id="dash-loading" class="loading"><span class="spinner"></span>Daten werden geladen…</div>
+  <div id="dash-content" style="display:none">
+    <div class="dash-toolbar">
+      <div class="stabs" id="dtabs"></div>
+      <div class="toolbar-divider"></div>
+      <select id="d-mon" onchange="renderDash()" style="padding:6px 10px;font-size:13px;border:1px solid var(--border);border-radius:6px;background:var(--card);font-family:'DM Sans',sans-serif;appearance:none;">
+        <option value="all">Alle Monate</option>
+        <option>Januar</option><option>Februar</option><option>März</option><option>April</option>
+        <option>Mai</option><option>Juni</option><option>Juli</option><option>August</option>
+        <option>September</option><option>Oktober</option><option>November</option><option>Dezember</option>
+      </select>
+      <div class="toolbar-divider"></div>
+      <div class="typ-pills">
+        <button class="typ-pill active" onclick="setDashTyp('all',this)">Alle</button>
+        <button class="typ-pill" onclick="setDashTyp('Probetraining',this)">🏋️ Probetraining</button>
+        <button class="typ-pill" onclick="setDashTyp('Wellpass',this)">💳 Wellpass</button>
+        <button class="typ-pill" onclick="setDashTyp('Walk-In',this)">🚶 Walk-In</button>
+      </div>
+    </div>
+    <div class="kpi-grid" id="dkpi"></div>
+    <div class="verlust-card"><div class="verlust-title">⚠ Entgangener Umsatz – Nicht abgeschlossene Probetrainings</div><div id="verlust-bars"></div></div>
+    <div class="charts-row">
+      <div class="chart-card"><div class="chart-title">Mitarbeiter-Quote</div><div id="mabars"></div></div>
+      <div class="chart-card"><div class="chart-title">Studio-Vergleich</div><div id="sbars"></div></div>
+    </div>
+    <div class="charts-row">
+      <div class="chart-card"><div class="chart-title">Umsatz nach Studio (€)</div><div id="revbars"></div></div>
+      <div class="chart-card">
+        <div class="chart-title">Abschlussquote – Monatsverlauf</div>
+        <div class="legend" id="mon-legend"></div>
+        <div style="position:relative;height:200px"><canvas id="monC"></canvas></div>
+      </div>
+    </div>
+    <div class="card"><div class="chart-title" style="margin-bottom:14px">Aufschlüsselung nach Besuchstyp</div><div id="typ-breakdown"></div></div>
+  </div>
+</div>
+
+<div id="sec-liste" class="sec">
+  <div id="liste-loading" class="loading" style="display:none"><span class="spinner"></span>Laden…</div>
+  <div class="filter-bar">
+    <select id="l-st" onchange="lPage=0;renderList()"><option value="all">Alle Studios</option><option value="Bad Homburg">Bad Homburg</option><option value="Karben">Karben</option><option value="Rosbach">Rosbach</option></select>
+    <select id="l-typ" onchange="lPage=0;renderList()"><option value="all">Alle Typen</option><option value="Probetraining">Probetraining</option><option value="Wellpass">Wellpass</option><option value="Walk-In">Walk-In</option></select>
+    <select id="l-ma" onchange="lPage=0;renderList()"><option value="all">Alle Mitarbeiter</option></select>
+    <select id="l-mon" onchange="lPage=0;renderList()"><option value="all">Alle Monate</option></select>
+    <select id="l-erg" onchange="lPage=0;renderList()"><option value="all">Alle Ergebnisse</option><option value="JA">Abschluss</option><option value="Nein">Kein Abschluss</option><option value="NT">Nicht teilg.</option><option value="Absage">Absage</option></select>
+    <input id="l-search" type="text" placeholder="Name suchen…" oninput="lPage=0;renderList()">
+  </div>
+  <div class="card" style="padding:0"><div class="table-wrap"><table><thead><tr><th>Datum</th><th>Studio</th><th>Typ</th><th>Name</th><th>Mitarbeiter</th><th>Monat</th><th>Ergebnis</th><th>Beitrag</th><th>Verlust</th><th>Grund</th><th></th></tr></thead><tbody id="ltb"></tbody></table></div></div>
+  <div class="pag"><span class="pag-info" id="lpag-info"></span><button class="btn-out" id="lp-prev" onclick="lPage--;renderList()">◀</button><button class="btn-out" id="lp-next" onclick="lPage++;renderList()">▶</button></div>
+</div>
+
+<div id="sec-ma" class="sec">
+  <div class="card">
+    <div style="font-size:15px;font-weight:600;margin-bottom:16px">Mitarbeiter verwalten</div>
+    <div class="stabs" id="ma-studio-tabs" style="margin-bottom:16px"></div>
+    <div class="tags" id="ma-tags"></div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <input id="ma-new" type="text" placeholder="Neuer Mitarbeiter" style="padding:9px 12px;font-size:13px;border:1px solid var(--border);border-radius:7px;background:var(--bg);width:220px;font-family:'DM Sans',sans-serif">
+      <button class="btn" onclick="addMA()">+ Hinzufügen</button>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal-bg" id="editModal">
+  <div class="modal">
+    <div class="modal-title">Eintrag bearbeiten</div>
+    <input type="hidden" id="edit-id">
+    <div class="form-grid-2">
+      <div class="fg"><label>Name</label><input id="edit-name" type="text"></div>
+      <div class="fg"><label>Datum</label><input id="edit-dat" type="date"></div>
+    </div>
+    <div class="form-grid-2">
+      <div class="fg"><label>Monat</label><select id="edit-mon"><option>Januar</option><option>Februar</option><option>März</option><option>April</option><option>Mai</option><option>Juni</option><option>Juli</option><option>August</option><option>September</option><option>Oktober</option><option>November</option><option>Dezember</option></select></div>
+      <div class="fg"><label>Mitarbeiter</label><input id="edit-ma" type="text"></div>
+    </div>
+    <div class="form-grid-2">
+      <div class="fg"><label>Besuchstyp</label><select id="edit-typ"><option value="Probetraining">Probetraining</option><option value="Wellpass">Wellpass</option><option value="Walk-In">Walk-In</option></select></div>
+      <div class="fg"><label>Ergebnis</label><select id="edit-erg" onchange="toggleEditPreis()"><option value="JA">Abschluss</option><option value="Nein">Kein Abschluss</option><option value="NT">Nicht teilgenommen</option><option value="Absage">Absage</option></select></div>
+    </div>
+    <div class="form-grid-2" id="edit-preis-row"><div class="fg"><label>Beitrag (€)</label><input id="edit-preis" type="number" min="0" step="1"></div><div></div></div>
+    <div class="fg" id="edit-grund-row" style="margin-bottom:4px"><label>Grund</label><textarea id="edit-grund"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn-out" onclick="closeModal()">Abbrechen</button>
+      <button class="btn" id="edit-save-btn" onclick="saveEdit()">✓ Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- INFO MODAL -->
+<div class="info-modal-bg" id="infoModal">
+  <div class="info-modal">
+    <div style="font-size:16px;font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:10px"><span style="font-size:22px">👋</span> Ansprechpartner</div>
+    <div style="background:var(--bg2);border-radius:10px;padding:16px;margin-bottom:16px">
+      <div style="font-size:16px;font-weight:600;margin-bottom:4px">Dennis</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:12px">Bei Fragen zum Sales.Cockpit</div>
+      <a href="tel:015251837446" style="display:inline-flex;align-items:center;gap:8px;background:var(--col-bh);color:#fff;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:500;text-decoration:none">📞 0152 51837446</a>
+    </div>
+    <button onclick="document.getElementById('infoModal').classList.remove('open')" style="width:100%;padding:11px;font-size:14px;font-weight:500;background:var(--text);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif">Schließen</button>
+  </div>
+</div>
+
+<script>
+
+const API_KEY = '$2a$10$FOEYQP0GOS7RLF9b5d4/HebX6g7yEFwhYU7kN9vocgiyD5a8dp1qG';
+const JSONBIN_URL = 'https://api.jsonbin.io/v3/b';
+const BIN_KEY = 'peoples_bin_id';
+
+async function getBinId() {
+  let id = localStorage.getItem(BIN_KEY);
+  if (id) return id;
+  const res = await fetch(JSONBIN_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Master-Key': API_KEY,
+      'X-Bin-Name': 'SalesCockpit',
+      'X-Bin-Private': 'false'
+    },
+    body: JSON.stringify({ entries: [], ma: {
+      'Bad Homburg': ['Davide','Connor','Malte','Lisa','Miquel','Malcom','Freddi','Dennis','Nina','Milena','Nickson','Daniel','Kurs'],
+      'Karben': ['Phillip','Mika','Sammy','Jonas','Chiara','Marc','Marsha','Daniel','Ryan','Connor','Kurs'],
+      'Rosbach': ['Tobias','Julia','Ryan','Philip','Maurice','Pascal','Malcom','Chiara','Kurs']
+    }})
+  });
+  const data = await res.json();
+  id = data.metadata.id;
+  localStorage.setItem(BIN_KEY, id);
+  return id;
+}
+
+async function readBin() {
+  const id = await getBinId();
+  const res = await fetch(JSONBIN_URL + '/' + id + '/latest', {
+    headers: { 'X-Master-Key': API_KEY }
+  });
+  const data = await res.json();
+  return data.record;
+}
+
+async function writeBin(record) {
+  const id = await getBinId();
+  await fetch(JSONBIN_URL + '/' + id, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Master-Key': API_KEY
+    },
+    body: JSON.stringify(record)
+  });
+}
+
+const STUDIOS=['Bad Homburg','Karben','Rosbach'];
+const MONS_ALL=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+const STUDIO_COLS={'Bad Homburg':'#1A4A7A','Karben':'#2E7D32','Rosbach':'#6A1B9A'};
+const DEFAULT_MA={'Bad Homburg':['Davide','Connor','Malte','Lisa','Miquel','Malcom','Freddi','Dennis','Nina','Milena','Nickson','Daniel','Kurs'],'Karben':['Phillip','Mika','Sammy','Jonas','Chiara','Marc','Marsha','Daniel','Ryan','Connor','Kurs'],'Rosbach':['Tobias','Julia','Ryan','Philip','Maurice','Pascal','Malcom','Chiara','Kurs']};
+
+let db={entries:[],ma:JSON.parse(JSON.stringify(DEFAULT_MA))};
+let dashSt='all',dashTyp='all',monCh=null,lPage=0,maSt='Bad Homburg';
+const PAGE=50;
+
+// ---- DATA LOADING ----
+async function loadData(showSpinner=false){
+  if(showSpinner){
+    document.getElementById('dash-loading').style.display='block';
+    document.getElementById('dash-content').style.display='none';
+  }
+  try{
+    const rec=await readBin();
+    db.entries=rec.entries||[];
+    db.ma=rec.ma||JSON.parse(JSON.stringify(DEFAULT_MA));
+    const now=new Date();
+    document.getElementById('last-update').textContent='Zuletzt: '+now.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+  }catch(e){
+    console.error('Load error:',e);
+  }
+  document.getElementById('dash-loading').style.display='none';
+  document.getElementById('dash-content').style.display='block';
+  renderDash();
+  if(document.getElementById('sec-liste').classList.contains('active'))renderList();
+  if(document.getElementById('sec-ma').classList.contains('active'))renderMA();
+}
+
+// Auto-refresh every 60 seconds
+setInterval(()=>loadData(false), 60000);
+loadData(true);
+
+// ---- NAV ----
+function nav(id,btn){document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));document.querySelectorAll('.hn').forEach(b=>b.classList.remove('active'));document.getElementById('sec-'+id).classList.add('active');btn.classList.add('active');if(id==='dash')renderDash();if(id==='liste'){lPage=0;renderList();}if(id==='ma')renderMA();}
+
+// ---- DASHBOARD ----
+function initDashTabs(){const tabs=document.getElementById('dtabs');tabs.innerHTML='';[['all','Alle Studios',''],['Bad Homburg','Bad Homburg','s-bh'],['Karben','Karben','s-ka'],['Rosbach','Rosbach','s-ro']].forEach(([val,label,cls])=>{const b=document.createElement('button');b.className='stab'+(cls?' '+cls:'')+(dashSt===val?' active':'');b.textContent=label;b.onclick=()=>{dashSt=val;document.querySelectorAll('#dtabs .stab').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderDash();};tabs.appendChild(b);});}
+function setDashTyp(typ,btn){dashTyp=typ;document.querySelectorAll('.typ-pill').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderDash();}
+function getFiltered(){let e=db.entries;if(dashSt!=='all')e=e.filter(x=>x.studio===dashSt);const fm=document.getElementById('d-mon').value;if(fm!=='all')e=e.filter(x=>x.monat===fm);if(dashTyp!=='all')e=e.filter(x=>(x.typ||'Probetraining')===dashTyp);return e;}
+function calcQ(ents){const rated=ents.filter(e=>e.ergebnis==='JA'||e.ergebnis==='Nein'||e.ergebnis==='Absage');const ja=rated.filter(e=>e.ergebnis==='JA');const revenue=ja.reduce((s,e)=>s+(e.preis||0),0);const verlust=ents.filter(e=>e.ergebnis==='Nein').reduce((s,e)=>s+(e.verlust||0),0);const nt=ents.filter(e=>e.ergebnis==='NT').length;return{total:rated.length,ja:ja.length,nein:rated.filter(e=>e.ergebnis==='Nein').length,abs:rated.filter(e=>e.ergebnis==='Absage').length,nt,q:rated.length>0?Math.round(ja.length/rated.length*100):0,revenue,verlust};}
+function renderDash(){initDashTabs();const ents=getFiltered();const s=calcQ(ents);const totalRevenue=db.entries.filter(e=>e.ergebnis==='JA').reduce((sum,e)=>sum+(e.preis||0),0);const totalVerlust=db.entries.filter(e=>e.ergebnis==='Nein').reduce((sum,e)=>sum+(e.verlust||0),0);
+document.getElementById('dkpi').innerHTML=`<div class="kpi"><div class="kpi-lbl">Besuche</div><div class="kpi-val">${ents.length}</div></div><div class="kpi"><div class="kpi-lbl">Abschlüsse</div><div class="kpi-val" style="color:var(--green)">${s.ja}</div></div><div class="kpi"><div class="kpi-lbl">Kein Abschluss</div><div class="kpi-val" style="color:var(--red)">${s.nein}</div></div><div class="kpi"><div class="kpi-lbl">Nicht teilg.</div><div class="kpi-val" style="color:var(--orange)">${s.nt}</div></div><div class="kpi"><div class="kpi-lbl">Absagen</div><div class="kpi-val" style="color:var(--text2)">${s.abs}</div></div><div class="kpi"><div class="kpi-lbl">Quote</div><div class="kpi-val">${s.q}%</div><div class="kpi-note">NT nicht gewertet</div></div><div class="kpi"><div class="kpi-lbl">Umsatz (gefiltert)</div><div class="kpi-val" style="font-size:20px;color:var(--green)">${s.revenue.toLocaleString('de-DE')} €</div></div><div class="kpi"><div class="kpi-lbl">Umsatz gesamt</div><div class="kpi-val" style="font-size:20px">${totalRevenue.toLocaleString('de-DE')} €</div></div><div class="kpi kpi-verlust"><div class="kpi-lbl">⚠ Verlust gesamt</div><div class="kpi-val" style="font-size:20px">–${totalVerlust.toLocaleString('de-DE')} €</div><div class="kpi-note">50€ je Nein</div></div>`;
+renderVerlustBars(ents);renderMABars(ents);renderStudioBars();renderRevBars();renderMonChart();renderTypBreakdown(ents);}
+function renderVerlustBars(ents){const vbs={};STUDIOS.forEach(s=>{vbs[s]=0;});ents.filter(e=>e.ergebnis==='Nein').forEach(e=>{if(vbs[e.studio]!==undefined)vbs[e.studio]+=(e.verlust||0);});const maxV=Math.max(...Object.values(vbs),1);const totalV=Object.values(vbs).reduce((a,b)=>a+b,0);document.getElementById('verlust-bars').innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:12px">`+STUDIOS.map(s=>{const v=vbs[s];const col=STUDIO_COLS[s];return`<div style="background:rgba(198,40,40,0.06);border-radius:10px;padding:14px"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:6px;text-transform:uppercase">${s}</div><div style="font-size:22px;font-weight:700;font-family:'DM Mono',monospace;color:var(--red)">–${v.toLocaleString('de-DE')} €</div><div style="font-size:11px;color:var(--text3);margin-top:4px">${ents.filter(e=>e.studio===s&&e.ergebnis==='Nein').length} nicht abgeschl.</div><div style="margin-top:10px;height:6px;background:var(--bg2);border-radius:3px;overflow:hidden"><div style="height:100%;width:${Math.round(v/maxV*100)}%;background:var(--red);border-radius:3px"></div></div></div>`;}).join('')+`</div><div style="font-size:12px;color:var(--text3)">Gesamt (gefiltert): <strong style="color:var(--red)">–${totalV.toLocaleString('de-DE')} €</strong></div>`;}
+function renderMABars(ents){const map={};ents.filter(e=>(e.ergebnis==='JA'||e.ergebnis==='Nein'||e.ergebnis==='Absage')&&e.ma).forEach(e=>{if(!map[e.ma])map[e.ma]={ja:0,t:0};map[e.ma].t++;if(e.ergebnis==='JA')map[e.ma].ja++;});const sorted=Object.entries(map).sort((a,b)=>(b[1].ja/b[1].t)-(a[1].ja/a[1].t)).slice(0,15);const el=document.getElementById('mabars');if(!sorted.length){el.innerHTML='<div style="padding:12px;color:var(--text3);font-size:13px">Keine Daten.</div>';return;}el.innerHTML=sorted.map(([ma,s])=>{const q=Math.round(s.ja/s.t*100);const c=q>=50?'#2F7D32':'#C62828';return`<div class="bar-row"><div class="bar-lbl">${ma}</div><div class="bar-track"><div class="bar-fill" style="width:${q}%;background:${c}"></div></div><div class="bar-pct" style="color:${c}">${q}%</div><div class="bar-cnt">${s.ja}/${s.t}</div></div>`;}).join('');}
+function renderStudioBars(){const fm=document.getElementById('d-mon').value;document.getElementById('sbars').innerHTML=STUDIOS.map(s=>{let e=db.entries.filter(x=>x.studio===s);if(fm!=='all')e=e.filter(x=>x.monat===fm);if(dashTyp!=='all')e=e.filter(x=>(x.typ||'Probetraining')===dashTyp);const st=calcQ(e);const c=st.q>=50?'#2F7D32':'#C62828';const col=STUDIO_COLS[s];return`<div class="bar-row"><div class="bar-lbl" style="color:${col};font-weight:600">${s}</div><div class="bar-track"><div class="bar-fill" style="width:${st.q}%;background:${c}"></div></div><div class="bar-pct" style="color:${c}">${st.q}%</div><div class="bar-cnt">${st.ja}/${st.total}</div></div>`;}).join('');}
+function renderRevBars(){const fm=document.getElementById('d-mon').value;const revs=STUDIOS.map(s=>{let e=db.entries.filter(x=>x.studio===s&&x.ergebnis==='JA');if(fm!=='all')e=e.filter(x=>x.monat===fm);if(dashTyp!=='all')e=e.filter(x=>(x.typ||'Probetraining')===dashTyp);return{s,rev:e.reduce((sum,x)=>sum+(x.preis||0),0)};});const max=Math.max(...revs.map(r=>r.rev),1);document.getElementById('revbars').innerHTML=revs.map(({s,rev})=>{const col=STUDIO_COLS[s];return`<div class="rev-bar-row"><div class="rev-bar-lbl" style="color:${col}">${s}</div><div class="rev-bar-track"><div class="rev-bar-fill" style="width:${Math.round(rev/max*100)}%;background:${col}"></div></div><div class="rev-bar-val" style="color:${col}">${rev.toLocaleString('de-DE')} €</div></div>`;}).join('');}
+function renderMonChart(){const COLS=[STUDIO_COLS['Bad Homburg'],STUDIO_COLS['Karben'],STUDIO_COLS['Rosbach']];const data={};MONS_ALL.forEach(m=>{data[m]={};STUDIOS.forEach(s=>{data[m][s]={ja:0,t:0};});});db.entries.filter(e=>(e.ergebnis==='JA'||e.ergebnis==='Nein'||e.ergebnis==='Absage')&&MONS_ALL.includes(e.monat)).forEach(e=>{if(data[e.monat]&&data[e.monat][e.studio]){data[e.monat][e.studio].t++;if(e.ergebnis==='JA')data[e.monat][e.studio].ja++;}});const labels=MONS_ALL.filter(m=>STUDIOS.some(s=>data[m][s].t>0));document.getElementById('mon-legend').innerHTML=STUDIOS.map((s,i)=>`<span class="leg"><span class="leg-dot" style="background:${COLS[i]}"></span>${s}</span>`).join('');if(monCh)monCh.destroy();monCh=new Chart(document.getElementById('monC'),{type:'line',data:{labels,datasets:STUDIOS.map((s,i)=>({label:s,data:labels.map(m=>data[m][s].t>0?Math.round(data[m][s].ja/data[m][s].t*100):null),borderColor:COLS[i],backgroundColor:COLS[i]+'18',pointBackgroundColor:COLS[i],pointRadius:4,tension:0.3,fill:false,spanGaps:false}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:0,max:100,ticks:{callback:v=>v+'%',font:{family:'DM Mono'}}},x:{ticks:{font:{family:'DM Mono',size:11}}}}}});}
+function renderTypBreakdown(ents){const types=['Probetraining','Wellpass','Walk-In'];const icons={Probetraining:'🏋️',Wellpass:'💳','Walk-In':'🚶'};document.getElementById('typ-breakdown').innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px">`+types.map(typ=>{const t=ents.filter(e=>(e.typ||'Probetraining')===typ);const s=calcQ(t);const c=s.q>=50?'var(--green)':'var(--red)';return`<div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:16px"><div style="font-size:22px;margin-bottom:6px">${icons[typ]}</div><div style="font-size:13px;font-weight:600;margin-bottom:8px">${typ}</div><div style="font-size:24px;font-weight:700;font-family:'DM Mono',monospace;margin-bottom:4px">${t.length}</div><div style="font-size:11px;color:var(--text3)">Besuche</div><div style="margin-top:10px;font-size:13px;font-weight:600;color:${c}">${s.q}% Quote</div><div style="font-size:11px;color:var(--text3);margin-top:2px">${s.ja} Abschlüsse · ${s.revenue.toLocaleString('de-DE')} €</div></div>`;}).join('')+`</div>`;}
+
+// ---- LISTE ----
+function renderList(){const fs=document.getElementById('l-st').value,ftyp=document.getElementById('l-typ').value,fma=document.getElementById('l-ma').value,fmon=document.getElementById('l-mon').value,ferg=document.getElementById('l-erg').value,fsearch=(document.getElementById('l-search').value||'').toLowerCase().trim();let ents=[...db.entries].sort((a,b)=>(b.datum||'').localeCompare(a.datum||''));if(fs!=='all')ents=ents.filter(e=>e.studio===fs);if(ftyp!=='all')ents=ents.filter(e=>(e.typ||'Probetraining')===ftyp);if(fma!=='all')ents=ents.filter(e=>e.ma===fma);if(fmon!=='all')ents=ents.filter(e=>e.monat===fmon);if(ferg!=='all')ents=ents.filter(e=>e.ergebnis===ferg);if(fsearch)ents=ents.filter(e=>(e.name||'').toLowerCase().includes(fsearch)||(e.ma||'').toLowerCase().includes(fsearch));const mas=[...new Set(db.entries.map(e=>e.ma).filter(Boolean))].sort();document.getElementById('l-ma').innerHTML='<option value="all">Alle Mitarbeiter</option>'+mas.map(m=>`<option value="${m}"${fma===m?' selected':''}>${m}</option>`).join('');document.getElementById('l-mon').innerHTML='<option value="all">Alle Monate</option>'+MONS_ALL.map(m=>`<option value="${m}"${fmon===m?' selected':''}>${m}</option>`).join('');const tb=document.getElementById('ltb');if(!ents.length){tb.innerHTML='<tr><td colspan="11" style="text-align:center;padding:2rem;color:var(--text3);font-size:13px">Keine Einträge gefunden.</td></tr>';document.getElementById('lpag-info').textContent='';document.getElementById('lp-prev').style.display='none';document.getElementById('lp-next').style.display='none';return;}const start=lPage*PAGE,end=Math.min(start+PAGE,ents.length);const typBadge={'Probetraining':'b-typ-pt','Wellpass':'b-typ-wp','Walk-In':'b-typ-wi'};tb.innerHTML=ents.slice(start,end).map(e=>{const typ=e.typ||'Probetraining';const col=STUDIO_COLS[e.studio]||'inherit';return`<tr><td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text3)">${e.datum||'–'}</td><td style="color:${col};font-weight:500">${e.studio}</td><td><span class="badge ${typBadge[typ]||''}">${typ}</span></td><td style="font-weight:500">${e.name}</td><td style="color:var(--text2)">${e.ma}</td><td style="color:var(--text3)">${e.monat||'–'}</td><td>${badge(e.ergebnis)}</td><td style="font-family:'DM Mono',monospace;font-size:12px;color:${e.ergebnis==='JA'?'var(--green)':'var(--text3)'}">${e.preis?e.preis+' €':'–'}</td><td style="font-family:'DM Mono',monospace;font-size:12px;color:${e.verlust?'var(--red)':'var(--text3)'}">${e.verlust?'–'+e.verlust+' €':'–'}</td><td><div class="grund-cell" title="${e.grund||''}">${e.grund||'–'}</div></td><td style="display:flex;gap:5px;white-space:nowrap"><button class="btn-edit" onclick="openEdit('${e.id}')">✎</button><button class="btn-del" onclick="delEntry('${e.id}')">✕</button></td></tr>`;}).join('');document.getElementById('lpag-info').textContent=`${start+1}–${end} von ${ents.length}`;document.getElementById('lp-prev').style.display=lPage>0?'':'none';document.getElementById('lp-next').style.display=end<ents.length?'':'none';}
+function badge(s){const m={JA:'b-ja',Nein:'b-nein',NT:'b-nt',Absage:'b-abs'};const l={JA:'Abschluss',Nein:'Kein Abschluss',NT:'Nicht teilg.',Absage:'Absage'};if(!s)return`<span style="color:var(--text3);font-size:11px">–</span>`;return`<span class="badge ${m[s]||'b-abs'}">${l[s]||s}</span>`;}
+
+// ---- EDIT ----
+function openEdit(id){const e=db.entries.find(x=>String(x.id)===String(id));if(!e)return;document.getElementById('edit-id').value=id;document.getElementById('edit-name').value=e.name||'';document.getElementById('edit-dat').value=e.datum||'';document.getElementById('edit-mon').value=e.monat||'Januar';document.getElementById('edit-ma').value=e.ma||'';document.getElementById('edit-typ').value=e.typ||'Probetraining';document.getElementById('edit-erg').value=e.ergebnis||'JA';document.getElementById('edit-preis').value=e.preis||'';document.getElementById('edit-grund').value=e.grund||'';toggleEditPreis();document.getElementById('editModal').classList.add('open');}
+function toggleEditPreis(){const erg=document.getElementById('edit-erg').value;document.getElementById('edit-preis-row').style.display=erg==='JA'?'':'none';document.getElementById('edit-grund-row').style.display=erg==='Nein'?'':'none';}
+function closeModal(){document.getElementById('editModal').classList.remove('open');}
+async function saveEdit(){const id=document.getElementById('edit-id').value;const erg=document.getElementById('edit-erg').value;const entry={id,name:document.getElementById('edit-name').value.trim(),datum:document.getElementById('edit-dat').value,monat:document.getElementById('edit-mon').value,ma:document.getElementById('edit-ma').value.trim(),typ:document.getElementById('edit-typ').value,ergebnis:erg,preis:erg==='JA'?parseInt(document.getElementById('edit-preis').value)||0:0,verlust:erg==='Nein'?50:0,grund:erg==='Nein'?document.getElementById('edit-grund').value.trim():'',studio:db.entries.find(x=>String(x.id)===String(id))?.studio||''};
+const btn=document.getElementById('edit-save-btn');btn.disabled=true;btn.textContent='Speichert…';
+try{const rec=await readBin();const idx=rec.entries.findIndex(x=>String(x.id)===String(id));if(idx!==-1)rec.entries[idx]=entry;await writeBin(rec);db.entries=rec.entries;closeModal();renderList();renderDash();}catch(e){alert('Verbindungsfehler.');}
+btn.disabled=false;btn.textContent='✓ Speichern';}
+
+async function delEntry(id){if(!confirm('Eintrag löschen?'))return;try{const rec=await readBin();rec.entries=rec.entries.filter(e=>String(e.id)!==String(id));await writeBin(rec);db.entries=rec.entries;renderList();renderDash();}catch(e){alert('Verbindungsfehler.');}}
+
+// ---- MITARBEITER ----
+function renderMA(){document.getElementById('ma-studio-tabs').innerHTML=STUDIOS.map(s=>{const cls=s==='Bad Homburg'?'s-bh':s==='Karben'?'s-ka':'s-ro';return`<button class="stab ${cls}${maSt===s?' active':''}" onclick="maSt='${s}';renderMA()">${s}</button>`;}).join('');document.getElementById('ma-tags').innerHTML=(db.ma[maSt]||[]).map(m=>`<span class="tag">${m}<span class="tag-x" onclick="removeMA('${m}')" title="Entfernen">×</span></span>`).join('');}
+async function addMA(){const val=document.getElementById('ma-new').value.trim();if(!val)return;if(!db.ma[maSt])db.ma[maSt]=[];if(!db.ma[maSt].includes(val)){db.ma[maSt].push(val);db.ma[maSt].sort();}document.getElementById('ma-new').value='';try{const rec=await readBin();rec.ma=db.ma;await writeBin(rec);}catch(e){}renderMA();}
+async function removeMA(name){if(!confirm(`"${name}" aus ${maSt} entfernen?`))return;db.ma[maSt]=(db.ma[maSt]||[]).filter(m=>m!==name);try{const rec=await readBin();rec.ma=db.ma;await writeBin(rec);}catch(e){}renderMA();}
+</script>
+</body>
+</html>

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sales.Cockpit – Karben</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#F5F4F0;--bg2:#ECEAE4;--bg3:#E2DFD8;--card:#FFFFFF;--border:#D8D5CE;--text:#1A1916;--text2:#5A5750;--text3:#9A958C;--accent:#2E7D32;--accent2:#1B5E20;--green:#2F7D32;--green-bg:#E8F5E9;--red:#C62828;--red-bg:#FFEBEE;--orange:#E65100;--orange-bg:#FFF3E0;--radius:12px;--radius-sm:7px;--shadow:0 1px 3px rgba(0,0,0,0.08);--studio-color:#2E7D32;--studio-light:#E8F5E9;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;}
+  .header{background:var(--studio-color);color:#fff;padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,0.2);}
+  .header-left{display:flex;flex-direction:column;}
+  .header-title{font-size:17px;font-weight:600;letter-spacing:-0.3px;}
+  .header-sub{font-size:11px;opacity:0.7;margin-top:1px;}
+  .header-right{display:flex;align-items:center;gap:8px;}
+  .header-badge{background:rgba(255,255,255,0.2);border-radius:999px;padding:4px 12px;font-size:12px;font-weight:500;}
+  .btn-info{background:rgba(255,255,255,0.2);border:none;border-radius:999px;padding:5px 12px;font-size:12px;font-weight:500;color:#fff;cursor:pointer;font-family:'DM Sans',sans-serif;}
+  .btn-info:hover{background:rgba(255,255,255,0.3);}
+  .main{max-width:600px;margin:0 auto;padding:28px 20px 60px;}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:16px;box-shadow:var(--shadow);}
+  .card-title{font-size:13px;font-weight:600;color:#1A1916;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:20px;}
+  .card-title-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;}
+  .fg{display:flex;flex-direction:column;gap:6px;}
+  .fg label{font-size:12px;font-weight:600;color:#1A1916;letter-spacing:0.2px;}
+  .fg input,.fg select,.fg textarea{padding:10px 12px;font-size:14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:#FFFFFF;color:var(--text);font-family:'DM Sans',sans-serif;transition:border-color .15s;appearance:none;-webkit-appearance:none;}
+  .fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--studio-color);background:#FFFFFF;}
+  .fg textarea{resize:vertical;min-height:70px;}
+  .typ-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;}
+  .typ-btn{padding:12px 8px;font-size:13px;font-weight:500;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:#FFFFFF;color:var(--text2);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;text-align:center;}
+  .typ-btn.active{border-color:var(--studio-color);background:var(--studio-light);color:var(--studio-color);font-weight:600;}
+  .typ-btn-icon{font-size:20px;display:block;margin-bottom:4px;}
+  .ergebnis-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px;}
+  .erg-btn{padding:11px 10px;font-size:13px;font-weight:500;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:#FFFFFF;color:var(--text2);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;text-align:center;line-height:1.3;}
+  .erg-btn.active-green{border-color:var(--green);background:var(--green-bg);color:var(--green);font-weight:600;}
+  .erg-btn.active-red{border-color:#E57373;background:var(--red-bg);color:var(--red);font-weight:600;}
+  .erg-btn.active-orange{border-color:#FFA726;background:var(--orange-bg);color:var(--orange);font-weight:600;}
+  .erg-btn.active-grey{border-color:#BDBDBD;background:#F5F5F5;color:#616161;font-weight:600;}
+  .preis-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;}
+  .preis-btn{padding:12px 8px;font-size:13px;font-weight:600;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:#FFFFFF;color:var(--text2);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;text-align:center;line-height:1.4;}
+  .preis-btn .preis-euro{font-family:'DM Mono',monospace;font-size:16px;display:block;}
+  .preis-btn .preis-label{font-size:10px;font-weight:500;color:var(--text3);display:block;margin-top:3px;}
+  .preis-btn.active{border-color:var(--green);background:var(--green-bg);color:var(--green);}
+  .preis-btn.active .preis-label{color:var(--green);opacity:0.8;}
+  .btn-edit-preis{padding:5px 11px;font-size:11px;font-weight:500;background:transparent;color:var(--studio-color);border:1px solid var(--studio-color);border-radius:var(--radius-sm);cursor:pointer;font-family:'DM Sans',sans-serif;}
+  .btn-edit-preis:hover{background:var(--studio-light);}
+  .preis-edit-panel{display:none;background:#ECEAE4;border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-top:10px;}
+  .preis-edit-panel.visible{display:block;}
+  .preis-edit-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px;}
+  .preis-edit-field{display:flex;flex-direction:column;gap:4px;}
+  .preis-edit-field label{font-size:11px;font-weight:600;color:#1A1916;}
+  .preis-edit-field input{padding:7px 9px;font-size:13px;border:1px solid var(--border);border-radius:5px;background:#FFFFFF;color:var(--text);font-family:'DM Mono',monospace;text-align:center;}
+  .preis-edit-field input[type="text"]{font-family:'DM Sans',sans-serif;text-align:left;}
+  .preis-edit-field input:focus{outline:none;border-color:var(--studio-color);}
+  .preis-edit-actions{display:flex;gap:8px;justify-content:flex-end;}
+  .wellpass-info{display:none;margin-bottom:0;background:#E8EAF6;border:1px solid #C5CAE9;border-radius:var(--radius-sm);padding:10px 12px;font-size:12px;color:#283593;}
+  .wellpass-info.visible{display:block;}
+  .verlust-info{display:none;margin-top:10px;background:var(--red-bg);border:1px solid #FFCDD2;border-radius:var(--radius-sm);padding:10px 12px;font-size:12px;color:var(--red);}
+  .verlust-info.visible{display:block;}
+  .grund-section{display:none;}
+  .grund-section.visible{display:block;}
+  .ok{background:var(--green-bg);color:var(--green);border:1px solid #C8E6C9;border-radius:var(--radius-sm);padding:12px 16px;font-size:13px;font-weight:500;margin-bottom:16px;display:none;animation:fadeIn .3s ease;}
+  .err{background:var(--red-bg);color:var(--red);border:1px solid #FFCDD2;border-radius:var(--radius-sm);padding:12px 16px;font-size:13px;font-weight:500;margin-bottom:16px;display:none;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:translateY(0);}}
+  .btn{width:100%;padding:14px;font-size:15px;font-weight:600;background:var(--studio-color);color:#fff;border:none;border-radius:var(--radius-sm);cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .15s;}
+  .btn:hover{background:var(--accent2);}
+  .btn:disabled{opacity:0.6;cursor:not-allowed;}
+  .btn-sm{padding:7px 14px;font-size:12px;font-weight:500;background:var(--studio-color);color:#fff;border:none;border-radius:var(--radius-sm);cursor:pointer;font-family:'DM Sans',sans-serif;}
+  .btn-sm-out{padding:7px 14px;font-size:12px;font-weight:500;background:#FFFFFF;color:var(--text2);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-family:'DM Sans',sans-serif;}
+  .divider{height:1px;background:var(--border);margin:16px 0;}
+  .section-label{font-size:11px;font-weight:700;color:#1A1916;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;}
+  .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.4);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .info-modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;align-items:center;justify-content:center;padding:20px;}
+  .info-modal-bg.open{display:flex;}
+  .info-modal{background:#fff;border-radius:14px;padding:26px;width:100%;max-width:360px;box-shadow:0 8px 32px rgba(0,0,0,0.3);}
+  @media(max-width:480px){.form-grid-2{grid-template-columns:1fr;}.main{padding:20px 14px 60px;}.preis-edit-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-left">
+    <div class="header-title">Sales.Cockpit</div>
+    <div class="header-sub">peoples fitness · Karben</div>
+  </div>
+  <div class="header-right">
+    <div class="header-badge">Karben</div>
+    <button class="btn-info" onclick="document.getElementById('infoModal').classList.add('open')">ℹ Info</button>
+  </div>
+</div>
+<div class="main">
+  <div id="ok" class="ok">✓ Eintrag gespeichert!</div>
+  <div id="err" class="err"></div>
+  <div class="card">
+    <div class="card-title">Besuchstyp</div>
+    <div class="typ-grid">
+      <button class="typ-btn active" onclick="setTyp('Probetraining',this)"><span class="typ-btn-icon">🏋️</span>Probetraining</button>
+      <button class="typ-btn" onclick="setTyp('Wellpass',this)"><span class="typ-btn-icon">💳</span>Wellpass</button>
+      <button class="typ-btn" onclick="setTyp('Walk-In',this)"><span class="typ-btn-icon">🚶</span>Walk-In</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Person & Mitarbeiter</div>
+    <div class="form-grid-2">
+      <div class="fg"><label>Name (Interessent)</label><input id="f-name" type="text" placeholder="Vor- und Nachname" autocomplete="off"></div>
+      <div class="fg"><label>Mitarbeiter</label><select id="f-ma"><option>Laden…</option></select></div>
+    </div>
+    <div class="form-grid-2">
+      <div class="fg"><label>Datum</label><input id="f-dat" type="date"></div>
+      <div class="fg"><label>Monat</label>
+        <select id="f-mon"><option>Januar</option><option>Februar</option><option>März</option><option>April</option><option>Mai</option><option>Juni</option><option>Juli</option><option>August</option><option>September</option><option>Oktober</option><option>November</option><option>Dezember</option></select>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Ergebnis</div>
+    <div class="section-label">Abschluss?</div>
+    <div class="ergebnis-grid">
+      <button class="erg-btn active-green" data-erg="JA" onclick="setErgebnis('JA',this)">✓ Abschluss</button>
+      <button class="erg-btn" data-erg="Nein" onclick="setErgebnis('Nein',this)">✗ Kein Abschluss</button>
+      <button class="erg-btn" data-erg="NT" onclick="setErgebnis('NT',this)">⊘ Nicht teilg.</button>
+      <button class="erg-btn" data-erg="Absage" onclick="setErgebnis('Absage',this)">↩ Absage</button>
+    </div>
+    <div id="wellpass-info" class="wellpass-info">💳 Wellpass-Besuch — kein Mitgliedsbeitrag erforderlich.</div>
+    <div id="preis-section">
+      <div class="divider"></div>
+      <div class="card-title-row">
+        <div class="section-label" style="margin-bottom:0">Mitgliedsbeitrag</div>
+        <button class="btn-edit-preis" onclick="togglePreisEdit()">✎ Beträge anpassen</button>
+      </div>
+      <div class="preis-grid">
+        <button class="preis-btn" onclick="selectPreis(0,this)"><span class="preis-euro" id="lbl-preis-0">35 €</span><span class="preis-label" id="lbl-name-0">24 Monate</span></button>
+        <button class="preis-btn" onclick="selectPreis(1,this)"><span class="preis-euro" id="lbl-preis-1">55 €</span><span class="preis-label" id="lbl-name-1">12 Monate</span></button>
+        <button class="preis-btn active" onclick="selectPreis(2,this)"><span class="preis-euro" id="lbl-preis-2">65 €</span><span class="preis-label" id="lbl-name-2">Flexibel</span></button>
+      </div>
+      <div class="preis-edit-panel" id="preis-edit-panel">
+        <div style="font-size:12px;font-weight:600;color:#1A1916;margin-bottom:12px">Beiträge &amp; Bezeichnungen anpassen</div>
+        <div class="preis-edit-grid">
+          <div class="preis-edit-field"><label>Betrag 1 (€)</label><input type="number" id="ep-val-0" min="0"></div>
+          <div class="preis-edit-field"><label>Betrag 2 (€)</label><input type="number" id="ep-val-1" min="0"></div>
+          <div class="preis-edit-field"><label>Betrag 3 (€)</label><input type="number" id="ep-val-2" min="0"></div>
+          <div class="preis-edit-field"><label>Bezeichnung 1</label><input type="text" id="ep-name-0"></div>
+          <div class="preis-edit-field"><label>Bezeichnung 2</label><input type="text" id="ep-name-1"></div>
+          <div class="preis-edit-field"><label>Bezeichnung 3</label><input type="text" id="ep-name-2"></div>
+        </div>
+        <div class="preis-edit-actions">
+          <button class="btn-sm-out" onclick="togglePreisEdit()">Abbrechen</button>
+          <button class="btn-sm" onclick="savePreisConfig()">✓ Übernehmen</button>
+        </div>
+      </div>
+    </div>
+    <div id="verlust-info" class="verlust-info">⚠ Nicht abgeschlossen — wird als <strong>50 € Verlust</strong> im Dashboard erfasst.</div>
+    <div id="grund-section" class="grund-section">
+      <div class="divider"></div>
+      <div class="fg"><label>Grund (kein Abschluss)</label><textarea id="f-grund" placeholder="z.B. Preis zu hoch, muss überlegen, bereits Mitglied..."></textarea></div>
+    </div>
+  </div>
+  <button class="btn" id="save-btn" onclick="saveEntry()">💾 Speichern</button>
+</div>
+<div class="info-modal-bg" id="infoModal">
+  <div class="info-modal">
+    <div style="font-size:16px;font-weight:600;color:#1A1916;margin-bottom:16px;display:flex;align-items:center;gap:10px"><span style="font-size:22px">👋</span> Ansprechpartner</div>
+    <div style="background:#F5F4F0;border-radius:10px;padding:16px;margin-bottom:16px">
+      <div style="font-size:16px;font-weight:600;color:#1A1916;margin-bottom:4px">Dennis</div>
+      <div style="font-size:13px;color:#5A5750;margin-bottom:12px">Bei Fragen zum Sales.Cockpit</div>
+      <a href="tel:015251837446" style="display:inline-flex;align-items:center;gap:8px;background:#2E7D32;color:#fff;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:500;text-decoration:none">📞 0152 51837446</a>
+    </div>
+    <button onclick="document.getElementById('infoModal').classList.remove('open')" style="width:100%;padding:11px;font-size:14px;font-weight:500;background:#1A1916;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif">Schließen</button>
+  </div>
+</div>
+<script>
+const STUDIO='Karben';
+const PREIS_SK='peoples_preise_KA';
+const DEFAULT_MA={'Bad Homburg':['Davide','Connor','Malte','Lisa','Miquel','Malcom','Freddi','Dennis','Nina','Milena','Nickson','Daniel','Kurs'],'Karben':['Phillip','Mika','Sammy','Jonas','Chiara','Marc','Marsha','Daniel','Ryan','Connor','Kurs'],'Rosbach':['Tobias','Julia','Ryan','Philip','Maurice','Pascal','Malcom','Chiara','Kurs']};
+const DEFAULT_PREISE=[{wert:35,name:'24 Monate'},{wert:55,name:'12 Monate'},{wert:65,name:'Flexibel'}];
+
+const API_KEY = '$2a$10$FOEYQP0GOS7RLF9b5d4/HebX6g7yEFwhYU7kN9vocgiyD5a8dp1qG';
+const JSONBIN_URL = 'https://api.jsonbin.io/v3/b';
+const BIN_KEY = 'peoples_bin_id';
+
+async function getBinId() {
+  let id = localStorage.getItem(BIN_KEY);
+  if (id) return id;
+  const res = await fetch(JSONBIN_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Master-Key': API_KEY,
+      'X-Bin-Name': 'SalesCockpit',
+      'X-Bin-Private': 'false'
+    },
+    body: JSON.stringify({ entries: [], ma: {
+      'Bad Homburg': ['Davide','Connor','Malte','Lisa','Miquel','Malcom','Freddi','Dennis','Nina','Milena','Nickson','Daniel','Kurs'],
+      'Karben': ['Phillip','Mika','Sammy','Jonas','Chiara','Marc','Marsha','Daniel','Ryan','Connor','Kurs'],
+      'Rosbach': ['Tobias','Julia','Ryan','Philip','Maurice','Pascal','Malcom','Chiara','Kurs']
+    }})
+  });
+  const data = await res.json();
+  id = data.metadata.id;
+  localStorage.setItem(BIN_KEY, id);
+  return id;
+}
+
+async function readBin() {
+  const id = await getBinId();
+  const res = await fetch(JSONBIN_URL + '/' + id + '/latest', {
+    headers: { 'X-Master-Key': API_KEY }
+  });
+  const data = await res.json();
+  return data.record;
+}
+
+async function writeBin(record) {
+  const id = await getBinId();
+  await fetch(JSONBIN_URL + '/' + id, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Master-Key': API_KEY
+    },
+    body: JSON.stringify(record)
+  });
+}
+
+function loadPreise(){try{const d=localStorage.getItem(PREIS_SK);return d?JSON.parse(d):JSON.parse(JSON.stringify(DEFAULT_PREISE));}catch(e){return JSON.parse(JSON.stringify(DEFAULT_PREISE));}}
+function savePreisLocal(p){try{localStorage.setItem(PREIS_SK,JSON.stringify(p));}catch(e){}}
+let preise=loadPreise(),selectedPreisIdx=2;
+function renderPreisButtons(){for(let i=0;i<3;i++){document.getElementById('lbl-preis-'+i).textContent=preise[i].wert+' €';document.getElementById('lbl-name-'+i).textContent=preise[i].name;}}
+function selectPreis(idx,btn){selectedPreisIdx=idx;document.querySelectorAll('.preis-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+function togglePreisEdit(){const p=document.getElementById('preis-edit-panel');if(!p.classList.contains('visible')){for(let i=0;i<3;i++){document.getElementById('ep-val-'+i).value=preise[i].wert;document.getElementById('ep-name-'+i).value=preise[i].name;}}p.classList.toggle('visible');}
+function savePreisConfig(){for(let i=0;i<3;i++){const v=parseInt(document.getElementById('ep-val-'+i).value),n=document.getElementById('ep-name-'+i).value.trim();if(!isNaN(v)&&v>0)preise[i].wert=v;if(n)preise[i].name=n;}savePreisLocal(preise);renderPreisButtons();document.getElementById('preis-edit-panel').classList.remove('visible');}
+let selectedTyp='Probetraining',selectedErgebnis='JA';
+const now=new Date();
+document.getElementById('f-dat').value=now.toISOString().split('T')[0];
+document.getElementById('f-mon').value=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'][now.getMonth()];
+renderPreisButtons();
+async function initMA(){try{const rec=await readBin();const mas=(rec.ma&&rec.ma[STUDIO])||DEFAULT_MA[STUDIO]||[];document.getElementById('f-ma').innerHTML=mas.map(m=>`<option value="${m}">${m}</option>`).join('');}catch(e){const mas=DEFAULT_MA[STUDIO]||[];document.getElementById('f-ma').innerHTML=mas.map(m=>`<option value="${m}">${m}</option>`).join('');}}
+initMA();
+function setTyp(typ,btn){selectedTyp=typ;document.querySelectorAll('.typ-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');updateView();}
+function setErgebnis(erg,btn){selectedErgebnis=erg;document.querySelectorAll('.erg-btn').forEach(b=>b.classList.remove('active-green','active-red','active-orange','active-grey'));const map={JA:'active-green',Nein:'active-red',NT:'active-orange',Absage:'active-grey'};btn.classList.add(map[erg]||'active-grey');updateView();}
+function updateView(){const isWP=selectedTyp==='Wellpass',erg=selectedErgebnis;document.getElementById('wellpass-info').classList.toggle('visible',isWP);document.getElementById('preis-section').style.display=(erg==='JA'&&!isWP)?'':'none';document.getElementById('verlust-info').classList.toggle('visible',erg==='Nein');document.getElementById('grund-section').classList.toggle('visible',erg==='Nein');}
+async function saveEntry(){
+  const name=document.getElementById('f-name').value.trim();
+  const ma=document.getElementById('f-ma').value;
+  if(!name){alert('Bitte Namen eingeben.');return;}
+  const isWP=selectedTyp==='Wellpass';
+  let preis=0,verlust=0;
+  if(selectedErgebnis==='JA'&&!isWP)preis=preise[selectedPreisIdx].wert;
+  else if(selectedErgebnis==='Nein')verlust=50;
+  const entry={id:String(Date.now()),studio:STUDIO,typ:selectedTyp,ma,datum:document.getElementById('f-dat').value,name,ergebnis:selectedErgebnis,preis,verlust,grund:selectedErgebnis==='Nein'?document.getElementById('f-grund').value.trim():'',monat:document.getElementById('f-mon').value};
+  const btn=document.getElementById('save-btn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Speichern…';
+  document.getElementById('err').style.display='none';
+  try{
+    const rec=await readBin();
+    rec.entries=rec.entries||[];
+    rec.entries.push(entry);
+    await writeBin(rec);
+    document.getElementById('f-name').value='';
+    document.getElementById('f-grund').value='';
+    selectedErgebnis='JA';
+    document.querySelectorAll('.erg-btn').forEach(b=>b.classList.remove('active-green','active-red','active-orange','active-grey'));
+    document.querySelector('.erg-btn[data-erg="JA"]').classList.add('active-green');
+    document.getElementById('preis-edit-panel').classList.remove('visible');
+    updateView();
+    const ok=document.getElementById('ok');ok.style.display='block';setTimeout(()=>ok.style.display='none',2500);
+  }catch(e){
+    const el=document.getElementById('err');el.textContent='Verbindungsfehler. Bitte Internetverbindung prüfen.';el.style.display='block';setTimeout(()=>el.style.display='none',5000);
+  }
+  btn.disabled=false;btn.innerHTML='💾 Speichern';
+}
+</script>
+</body>
+</html>
