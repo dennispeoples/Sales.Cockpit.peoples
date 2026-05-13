@@ -61,8 +61,6 @@
   .preis-edit-actions{display:flex;gap:8px;justify-content:flex-end;}
   .wellpass-info{display:none;margin-bottom:0;background:#E8EAF6;border:1px solid #C5CAE9;border-radius:var(--radius-sm);padding:10px 12px;font-size:12px;color:#283593;}
   .wellpass-info.visible{display:block;}
-  .verlust-info{display:none;margin-top:10px;background:var(--red-bg);border:1px solid #FFCDD2;border-radius:var(--radius-sm);padding:10px 12px;font-size:12px;color:var(--red);}
-  .verlust-info.visible{display:block;}
   .grund-section{display:none;}
   .grund-section.visible{display:block;}
   .ok{background:var(--green-bg);color:var(--green);border:1px solid #C8E6C9;border-radius:var(--radius-sm);padding:12px 16px;font-size:13px;font-weight:500;margin-bottom:16px;display:none;animation:fadeIn .3s ease;}
@@ -158,7 +156,6 @@
         </div>
       </div>
     </div>
-    <div id="verlust-info" class="verlust-info">⚠ Nicht abgeschlossen — wird als <strong>50 € Verlust</strong> im Dashboard erfasst.</div>
     <div id="grund-section" class="grund-section">
       <div class="divider"></div>
       <div class="fg"><label>Grund (kein Abschluss)</label><textarea id="f-grund" placeholder="z.B. Preis zu hoch, muss überlegen, bereits Mitglied..."></textarea></div>
@@ -228,7 +225,7 @@ async function initMA(){try{const rec=await readBin();const mas=(rec.ma&&rec.ma[
 initMA();
 function setTyp(typ,btn){selectedTyp=typ;document.querySelectorAll('.typ-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');updateView();}
 function setErgebnis(erg,btn){selectedErgebnis=erg;document.querySelectorAll('.erg-btn').forEach(b=>b.classList.remove('active-green','active-red','active-orange','active-grey'));const map={JA:'active-green',Nein:'active-red',NT:'active-orange',Absage:'active-grey'};btn.classList.add(map[erg]||'active-grey');updateView();}
-function updateView(){const isWP=selectedTyp==='Wellpass',erg=selectedErgebnis;document.getElementById('wellpass-info').classList.toggle('visible',isWP);document.getElementById('preis-section').style.display=(erg==='JA'&&!isWP)?'':'none';document.getElementById('verlust-info').classList.toggle('visible',erg==='Nein');document.getElementById('grund-section').classList.toggle('visible',erg==='Nein');}
+function updateView(){const isWP=selectedTyp==='Wellpass',erg=selectedErgebnis;document.getElementById('wellpass-info').classList.toggle('visible',isWP);document.getElementById('preis-section').style.display=(erg==='JA'&&!isWP)?'':'none';document.getElementById('grund-section').classList.toggle('visible',erg==='Nein');}
 async function saveEntry(){
   const name=document.getElementById('f-name').value.trim();
   const ma=document.getElementById('f-ma').value;
