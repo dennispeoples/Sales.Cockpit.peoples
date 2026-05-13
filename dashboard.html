@@ -115,6 +115,26 @@
   .info-modal-bg.open{display:flex;}
   .info-modal{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);padding:24px;width:100%;max-width:360px;box-shadow:var(--shadow-md);}
   .auto-refresh{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:5px;}
+
+  .absage-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:16px;}
+  .absage-item{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .absage-left{display:flex;align-items:center;gap:10px;}
+  .absage-icon{font-size:20px;}
+  .absage-name{font-size:13px;font-weight:500;color:var(--text);}
+  .absage-count{font-size:22px;font-weight:700;font-family:'DM Mono',monospace;color:var(--red);}
+  .absage-pct{font-size:11px;color:var(--text3);margin-top:2px;}
+  .absage-bar-wrap{height:4px;background:var(--bg2);border-radius:2px;margin-top:8px;overflow:hidden;}
+  .absage-bar{height:100%;background:var(--red);border-radius:2px;transition:width .4s;}
+  .absage-modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:250;align-items:center;justify-content:center;padding:20px;}
+  .absage-modal-bg.open{display:flex;}
+  .absage-modal{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);padding:24px;width:100%;max-width:600px;max-height:80vh;overflow-y:auto;box-shadow:var(--shadow-md);}
+  .absage-modal-title{font-size:16px;font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:10px;}
+  .absage-entry{padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;background:var(--bg);}
+  .absage-entry-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:6px;}
+  .absage-entry-name{font-size:13px;font-weight:600;color:var(--text);}
+  .absage-entry-meta{font-size:11px;color:var(--text3);}
+  .absage-entry-grund{font-size:12px;color:var(--text2);font-style:italic;background:var(--bg2);padding:7px 10px;border-radius:5px;margin-top:6px;}
+
   @media(max-width:700px){.charts-row,.form-grid-2{grid-template-columns:1fr;}.header{flex-wrap:wrap;height:auto;padding:10px 16px;gap:8px;}.main{padding:16px 12px 60px;}.dash-toolbar{flex-direction:column;align-items:flex-start;gap:10px;}.toolbar-divider{display:none;}}
 </style>
 </head>
@@ -173,6 +193,12 @@
       </div>
     </div>
     <div class="card"><div class="chart-title" style="margin-bottom:14px">Aufschlüsselung nach Besuchstyp</div><div id="typ-breakdown"></div></div>
+
+  <div class="card">
+    <div class="chart-title" style="margin-bottom:14px">Absagegründe – Auswertung</div>
+    <div id="absage-breakdown"></div>
+  </div>
+
   </div>
 </div>
 
@@ -202,6 +228,17 @@
   </div>
 </div>
 
+</div>
+
+<!-- ABSAGE DETAIL MODAL -->
+<div class="absage-modal-bg" id="absageModal">
+  <div class="absage-modal">
+    <div class="absage-modal-title" id="absage-modal-title"></div>
+    <div id="absage-modal-entries"></div>
+    <div style="margin-top:16px;text-align:right">
+      <button class="btn-out" onclick="document.getElementById('absageModal').classList.remove('open')">Schließen</button>
+    </div>
+  </div>
 </div>
 
 <!-- EDIT MODAL -->
@@ -317,9 +354,109 @@ function initDashTabs(){const tabs=document.getElementById('dtabs');tabs.innerHT
 function setDashTyp(typ,btn){dashTyp=typ;document.querySelectorAll('.typ-pill').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderDash();}
 function getFiltered(){let e=db.entries;if(dashSt!=='all')e=e.filter(x=>x.studio===dashSt);const fm=document.getElementById('d-mon').value;if(fm!=='all')e=e.filter(x=>x.monat===fm);if(dashTyp!=='all')e=e.filter(x=>(x.typ||'Probetraining')===dashTyp);return e;}
 function calcQ(ents){const rated=ents.filter(e=>e.ergebnis==='JA'||e.ergebnis==='Nein'||e.ergebnis==='Absage');const ja=rated.filter(e=>e.ergebnis==='JA');const revenue=ja.reduce((s,e)=>s+(e.preis||0),0);const verlust=ents.filter(e=>e.ergebnis==='Nein').reduce((s,e)=>s+(e.verlust||0),0);const nt=ents.filter(e=>e.ergebnis==='NT').length;return{total:rated.length,ja:ja.length,nein:rated.filter(e=>e.ergebnis==='Nein').length,abs:rated.filter(e=>e.ergebnis==='Absage').length,nt,q:rated.length>0?Math.round(ja.length/rated.length*100):0,revenue,verlust};}
+
+const ABSAGE_KATEGORIEN = [
+  { key: 'preis',      label: 'Preis zu hoch',          icon: '💰', keywords: ['preis','teuer','zu hoch','kostet','budget','günstig','billiger','rabatt','angebot'] },
+  { key: 'ueberlegen', label: 'Muss überlegen',          icon: '🤔', keywords: ['überlegen','überleg','nachdenken','zeit','meld','später','nochmal','bescheid','entscheid'] },
+  { key: 'konkurrenz', label: 'Konkurrenz',              icon: '🏪', keywords: ['konkurrenz','anderes studio','anderes gym','fitness first','mcfit','clever','injoy','eos','kieser','andere'] },
+  { key: 'lage',       label: 'Lage / Anfahrt',          icon: '📍', keywords: ['lage','weit','anfahrt','entfernung','nah','weg','pendel','erreichbar','parken','parkplatz'] },
+  { key: 'zeit',       label: 'Keine Zeit',              icon: '⏰', keywords: ['zeit','keine zeit','stress','viel zu tun','beschäftigt','arbeit','schicht','urlaub'] },
+  { key: 'ausstattung',label: 'Ausstattung / Geräte',    icon: '🏅', keywords: ['gerät','ausstattung','maschine','equipment','gewicht','sauna','pool','solarium','umkleid'] },
+  { key: 'kurse',      label: 'Kursangebot',             icon: '📅', keywords: ['kurs','kursplan','yoga','zumba','spinning','cycling','pilates','group','gruppenfitness'] },
+  { key: 'hygiene',    label: 'Hygiene',                 icon: '🧹', keywords: ['hygiene','sauber','dreckig','schmutzig','geruch','dusche','toilette','umkleide'] },
+  { key: 'alleine',    label: 'Trainiert alleine',       icon: '🎧', keywords: ['alleine','solo','für sich','ohne','kein partner','eigenständig'] },
+  { key: 'anderes',    label: 'In einem anderen Studio', icon: '🏢', keywords: ['anderen studio','anderem studio','schon mitglied','bereits','woanders','dort angemeldet'] },
+];
+
+function kategorisierGrund(grund) {
+  if (!grund) return 'sonstiges';
+  const g = grund.toLowerCase();
+  for (const kat of ABSAGE_KATEGORIEN) {
+    if (kat.keywords.some(kw => g.includes(kw))) return kat.key;
+  }
+  return 'sonstiges';
+}
+
+// Store filtered entries for modal access
+let _absageEnts = [];
+
+function renderAbsageBreakdown(ents) {
+  _absageEnts = ents;
+  const nein = ents.filter(e => e.ergebnis === 'Nein' && e.grund);
+  const ohneGrund = ents.filter(e => e.ergebnis === 'Nein' && !e.grund).length;
+  const counts = {};
+  ABSAGE_KATEGORIEN.forEach(k => counts[k.key] = 0);
+  counts['sonstiges'] = 0;
+  nein.forEach(e => { const k = kategorisierGrund(e.grund); counts[k] = (counts[k] || 0) + 1; });
+  counts['sonstiges'] += ohneGrund;
+  const total = Object.values(counts).reduce((a,b) => a+b, 0);
+  if (total === 0) {
+    document.getElementById('absage-breakdown').innerHTML = '<div style="padding:12px;color:var(--text3);font-size:13px">Noch keine Absagegründe erfasst.</div>';
+    return;
+  }
+  const allKats = [
+    ...ABSAGE_KATEGORIEN,
+    { key: 'sonstiges', label: 'Sonstiges', icon: '❓' }
+  ].filter(k => counts[k.key] > 0)
+   .sort((a,b) => counts[b.key] - counts[a.key]);
+
+  const max = Math.max(...allKats.map(k => counts[k.key]), 1);
+
+  document.getElementById('absage-breakdown').innerHTML =
+    `<div style="font-size:12px;color:var(--text3);margin-bottom:14px">${total} Absagen ausgewertet · Klick auf eine Kategorie für Details</div>` +
+    `<div class="absage-grid">` +
+    allKats.map(k => {
+      const cnt = counts[k.key];
+      const pct = Math.round(cnt / total * 100);
+      return `<div class="absage-item" style="flex-direction:column;align-items:flex-start;cursor:pointer;transition:all .15s;" 
+        onclick="openAbsageDetail('${k.key}')"
+        onmouseover="this.style.background='var(--bg2)';this.style.borderColor='var(--text3)'"
+        onmouseout="this.style.background='var(--bg)';this.style.borderColor='var(--border)'">
+        <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+          <div class="absage-left"><span class="absage-icon">${k.icon}</span><span class="absage-name">${k.label}</span></div>
+          <div style="text-align:right"><div class="absage-count">${cnt}</div><div class="absage-pct">${pct}% · Details →</div></div>
+        </div>
+        <div class="absage-bar-wrap" style="width:100%"><div class="absage-bar" style="width:${Math.round(cnt/max*100)}%"></div></div>
+      </div>`;
+    }).join('') +
+    `</div>`;
+}
+
+function openAbsageDetail(key) {
+  const allKats = [...ABSAGE_KATEGORIEN, { key: 'sonstiges', label: 'Sonstiges', icon: '❓' }];
+  const kat = allKats.find(k => k.key === key);
+  if (!kat) return;
+
+  // Find matching entries
+  let entries;
+  if (key === 'sonstiges') {
+    entries = _absageEnts.filter(e => e.ergebnis === 'Nein' && (!e.grund || kategorisierGrund(e.grund) === 'sonstiges'));
+  } else {
+    entries = _absageEnts.filter(e => e.ergebnis === 'Nein' && e.grund && kategorisierGrund(e.grund) === key);
+  }
+
+  document.getElementById('absage-modal-title').innerHTML = `<span>${kat.icon}</span> ${kat.label} <span style="font-size:13px;color:var(--text3);font-weight:400">(${entries.length} Einträge)</span>`;
+
+  const STUDIO_COLS_LOCAL = {'Bad Homburg':'#1A4A7A','Karben':'#2E7D32','Rosbach':'#6A1B9A'};
+
+  document.getElementById('absage-modal-entries').innerHTML = entries.length === 0
+    ? '<div style="color:var(--text3);font-size:13px;padding:12px">Keine Einträge gefunden.</div>'
+    : entries.sort((a,b) => (b.datum||'').localeCompare(a.datum||'')).map(e => `
+      <div class="absage-entry">
+        <div class="absage-entry-top">
+          <div class="absage-entry-name">${e.name}</div>
+          <div class="absage-entry-meta" style="color:${STUDIO_COLS_LOCAL[e.studio]||'inherit'};font-weight:500">${e.studio}</div>
+        </div>
+        <div class="absage-entry-meta">👤 ${e.ma} &nbsp;·&nbsp; 📅 ${e.datum||'–'} &nbsp;·&nbsp; ${e.monat||'–'}</div>
+        ${e.grund ? `<div class="absage-entry-grund">„${e.grund}"</div>` : '<div class="absage-entry-grund" style="color:var(--text3)">Kein Grund eingetragen</div>'}
+      </div>`).join('');
+
+  document.getElementById('absageModal').classList.add('open');
+}
+
 function renderDash(){initDashTabs();const ents=getFiltered();const s=calcQ(ents);const totalRevenue=db.entries.filter(e=>e.ergebnis==='JA').reduce((sum,e)=>sum+(e.preis||0),0);const totalVerlust=db.entries.filter(e=>e.ergebnis==='Nein').reduce((sum,e)=>sum+(e.verlust||0),0);
 document.getElementById('dkpi').innerHTML=`<div class="kpi"><div class="kpi-lbl">Besuche</div><div class="kpi-val">${ents.length}</div></div><div class="kpi"><div class="kpi-lbl">Abschlüsse</div><div class="kpi-val" style="color:var(--green)">${s.ja}</div></div><div class="kpi"><div class="kpi-lbl">Kein Abschluss</div><div class="kpi-val" style="color:var(--red)">${s.nein}</div></div><div class="kpi"><div class="kpi-lbl">Nicht teilg.</div><div class="kpi-val" style="color:var(--orange)">${s.nt}</div></div><div class="kpi"><div class="kpi-lbl">Absagen</div><div class="kpi-val" style="color:var(--text2)">${s.abs}</div></div><div class="kpi"><div class="kpi-lbl">Quote</div><div class="kpi-val">${s.q}%</div><div class="kpi-note">NT nicht gewertet</div></div><div class="kpi"><div class="kpi-lbl">Umsatz (gefiltert)</div><div class="kpi-val" style="font-size:20px;color:var(--green)">${s.revenue.toLocaleString('de-DE')} €</div></div><div class="kpi"><div class="kpi-lbl">Umsatz gesamt</div><div class="kpi-val" style="font-size:20px">${totalRevenue.toLocaleString('de-DE')} €</div></div><div class="kpi kpi-verlust"><div class="kpi-lbl">⚠ Verlust gesamt</div><div class="kpi-val" style="font-size:20px">–${totalVerlust.toLocaleString('de-DE')} €</div><div class="kpi-note">50€ je Nein</div></div>`;
-renderVerlustBars(ents);renderMABars(ents);renderStudioBars();renderRevBars();renderMonChart();renderTypBreakdown(ents);}
+renderVerlustBars(ents);renderMABars(ents);renderStudioBars();renderRevBars();renderMonChart();renderTypBreakdown(ents);renderAbsageBreakdown(ents);}
 function renderVerlustBars(ents){const vbs={};STUDIOS.forEach(s=>{vbs[s]=0;});ents.filter(e=>e.ergebnis==='Nein').forEach(e=>{if(vbs[e.studio]!==undefined)vbs[e.studio]+=(e.verlust||0);});const maxV=Math.max(...Object.values(vbs),1);const totalV=Object.values(vbs).reduce((a,b)=>a+b,0);document.getElementById('verlust-bars').innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:12px">`+STUDIOS.map(s=>{const v=vbs[s];const col=STUDIO_COLS[s];return`<div style="background:rgba(198,40,40,0.06);border-radius:10px;padding:14px"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:6px;text-transform:uppercase">${s}</div><div style="font-size:22px;font-weight:700;font-family:'DM Mono',monospace;color:var(--red)">–${v.toLocaleString('de-DE')} €</div><div style="font-size:11px;color:var(--text3);margin-top:4px">${ents.filter(e=>e.studio===s&&e.ergebnis==='Nein').length} nicht abgeschl.</div><div style="margin-top:10px;height:6px;background:var(--bg2);border-radius:3px;overflow:hidden"><div style="height:100%;width:${Math.round(v/maxV*100)}%;background:var(--red);border-radius:3px"></div></div></div>`;}).join('')+`</div><div style="font-size:12px;color:var(--text3)">Gesamt (gefiltert): <strong style="color:var(--red)">–${totalV.toLocaleString('de-DE')} €</strong></div>`;}
 function renderMABars(ents){const map={};ents.filter(e=>(e.ergebnis==='JA'||e.ergebnis==='Nein'||e.ergebnis==='Absage')&&e.ma).forEach(e=>{if(!map[e.ma])map[e.ma]={ja:0,t:0};map[e.ma].t++;if(e.ergebnis==='JA')map[e.ma].ja++;});const sorted=Object.entries(map).sort((a,b)=>(b[1].ja/b[1].t)-(a[1].ja/a[1].t)).slice(0,15);const el=document.getElementById('mabars');if(!sorted.length){el.innerHTML='<div style="padding:12px;color:var(--text3);font-size:13px">Keine Daten.</div>';return;}el.innerHTML=sorted.map(([ma,s])=>{const q=Math.round(s.ja/s.t*100);const c=q>=50?'#2F7D32':'#C62828';return`<div class="bar-row"><div class="bar-lbl">${ma}</div><div class="bar-track"><div class="bar-fill" style="width:${q}%;background:${c}"></div></div><div class="bar-pct" style="color:${c}">${q}%</div><div class="bar-cnt">${s.ja}/${s.t}</div></div>`;}).join('');}
 function renderStudioBars(){const fm=document.getElementById('d-mon').value;document.getElementById('sbars').innerHTML=STUDIOS.map(s=>{let e=db.entries.filter(x=>x.studio===s);if(fm!=='all')e=e.filter(x=>x.monat===fm);if(dashTyp!=='all')e=e.filter(x=>(x.typ||'Probetraining')===dashTyp);const st=calcQ(e);const c=st.q>=50?'#2F7D32':'#C62828';const col=STUDIO_COLS[s];return`<div class="bar-row"><div class="bar-lbl" style="color:${col};font-weight:600">${s}</div><div class="bar-track"><div class="bar-fill" style="width:${st.q}%;background:${c}"></div></div><div class="bar-pct" style="color:${c}">${st.q}%</div><div class="bar-cnt">${st.ja}/${st.total}</div></div>`;}).join('');}
