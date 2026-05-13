@@ -250,26 +250,7 @@ const JSONBIN_URL = 'https://api.jsonbin.io/v3/b';
 const BIN_KEY = 'peoples_bin_id';
 
 async function getBinId() {
-  let id = localStorage.getItem(BIN_KEY);
-  if (id) return id;
-  const res = await fetch(JSONBIN_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Master-Key': API_KEY,
-      'X-Bin-Name': 'SalesCockpit',
-      'X-Bin-Private': 'false'
-    },
-    body: JSON.stringify({ entries: [], ma: {
-      'Bad Homburg': ['Davide','Connor','Malte','Lisa','Miquel','Malcom','Freddi','Dennis','Nina','Milena','Nickson','Daniel','Kurs'],
-      'Karben': ['Phillip','Mika','Sammy','Jonas','Chiara','Marc','Marsha','Daniel','Ryan','Connor','Kurs'],
-      'Rosbach': ['Tobias','Julia','Ryan','Philip','Maurice','Pascal','Malcom','Chiara','Kurs']
-    }})
-  });
-  const data = await res.json();
-  id = data.metadata.id;
-  localStorage.setItem(BIN_KEY, id);
-  return id;
+  return '6a042a4badc21f119a925b81';
 }
 
 async function readBin() {
