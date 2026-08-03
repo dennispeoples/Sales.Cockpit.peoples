@@ -168,6 +168,7 @@
      <button class="hn active" onclick="nav('dash',this)">Dashboard</button>
      <button class="hn" onclick="nav('liste',this)">Einträge</button>
      <button class="hn" onclick="openPptxModal()">Auswertung</button>
+     <button class="hn" onclick="nav('provision',this)">Provision</button>
      <button class="hn" onclick="nav('beitraege',this)">Beiträge</button>
      <button class="hn" onclick="nav('ma',this)">Mitarbeiter</button>
      <button class="hn" onclick="nav('firmen',this)">Wellhub</button>
@@ -288,6 +289,34 @@
  </div>
 </div>
 
+<div id="sec-provision" class="sec">
+ <div class="card">
+   <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:6px">
+     <div>
+       <div style="font-size:15px;font-weight:600">Provision · Vertragsabschlüsse</div>
+       <div style="font-size:12px;color:var(--text3);margin-top:2px">Bad Homburg = Signature · Karben &amp; Rosbach = Classic · B2B ohne Provision · Teamleiter ausgeschlossen · alle Beträge sind Bruttobeträge</div>
+     </div>
+     <div style="display:flex;align-items:center;gap:8px">
+       <select id="prov-mon" onchange="renderProvision()" style="padding:6px 10px;font-size:13px;border:1px solid var(--border);border-radius:6px;background:var(--card);font-family:'DM Sans',sans-serif"></select>
+       <button class="btn" onclick="exportProvisionCSV()">Export CSV</button>
+     </div>
+   </div>
+   <div id="prov-kpis" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0"></div>
+   <div class="table-wrap"><table>
+     <thead><tr><th>Mitarbeiter</th><th>Studio</th><th style="text-align:right">Abschlüsse</th><th style="text-align:right">Bestätigt</th><th style="text-align:right">Offen (14 T.)</th></tr></thead>
+     <tbody id="prov-tb"></tbody>
+   </table></div>
+   <div style="font-size:11px;color:var(--text3);margin-top:10px">Hinweis: Alle ausgewiesenen Provisionsbeträge sind Bruttobeträge. Teamleiter (Davide, Chiara, Marsha) sind von der Provision ausgeschlossen, werden zur Übersicht aber weiterhin angezeigt.</div>
+ </div>
+ <div class="card" style="margin-top:16px">
+   <div style="font-size:15px;font-weight:600;margin-bottom:2px">14-Tage-Abschlüsse · zu prüfen</div>
+   <div style="font-size:12px;color:var(--text3);margin-bottom:14px">Provision zählt nur, wenn nach den 14 Tagen nicht gekündigt wurde. Bitte je Abschluss bestätigen (✓) oder stornieren (✕).</div>
+   <div class="table-wrap"><table>
+     <thead><tr><th>Datum</th><th>Name</th><th>Mitarbeiter</th><th>Studio</th><th>Tarif</th><th style="text-align:right">Provision</th><th>Status</th><th></th></tr></thead>
+     <tbody id="prov14-tb"></tbody>
+   </table></div>
+ </div>
+</div>
 <div id="sec-beitraege" class="sec">
  <div class="card">
    <div style="font-size:15px;font-weight:600;margin-bottom:6px">Beiträge verwalten</div>
@@ -391,7 +420,7 @@ const DEFAULT_MA={'Bad Homburg':['Davide','Connor','Malte','Lisa','Miquel','Malc
 
 let db={entries:[],ma:JSON.parse(JSON.stringify(DEFAULT_MA))};
 let dashSt='all',dashTyp='all',dashMitglied='all',monCh=null,lPage=0,maSt='Bad Homburg',preiseSt='Bad Homburg';
-const DEFAULT_PREISE_DB={'Bad Homburg':[{wert:45,name:'24 Monate'},{wert:65,name:'12 Monate'},{wert:75,name:'Flexibel'},{wert:55,name:'12 Monate B2B'},{wert:85,name:'Flexibel B2B'}],'Karben':[{wert:35,name:'24 Monate'},{wert:55,name:'12 Monate'},{wert:65,name:'Flexibel'},{wert:45,name:'12 Monate B2B'},{wert:75,name:'Flexibel B2B'}],'Rosbach':[{wert:35,name:'24 Monate'},{wert:55,name:'12 Monate'},{wert:65,name:'Flexibel'},{wert:45,name:'12 Monate B2B'},{wert:75,name:'Flexibel B2B'}]};
+const DEFAULT_PREISE_DB={'Bad Homburg':[{wert:45,name:'24 Monate'},{wert:65,name:'12 Monate'},{wert:75,name:'Flexibel'},{wert:45,name:'24 Monate (14 Tage Gratis Training)'},{wert:65,name:'12 Monate (14 Tage Gratis Training)'},{wert:75,name:'Flexibel (14 Tage Gratis Training)'},{wert:55,name:'12 Monate B2B'},{wert:85,name:'Flexibel B2B'}],'Karben':[{wert:35,name:'24 Monate'},{wert:55,name:'12 Monate'},{wert:65,name:'Flexibel'},{wert:35,name:'24 Monate (14 Tage Gratis Training)'},{wert:55,name:'12 Monate (14 Tage Gratis Training)'},{wert:65,name:'Flexibel (14 Tage Gratis Training)'},{wert:45,name:'12 Monate B2B'},{wert:75,name:'Flexibel B2B'}],'Rosbach':[{wert:35,name:'24 Monate'},{wert:55,name:'12 Monate'},{wert:65,name:'Flexibel'},{wert:35,name:'24 Monate (14 Tage Gratis Training)'},{wert:55,name:'12 Monate (14 Tage Gratis Training)'},{wert:65,name:'Flexibel (14 Tage Gratis Training)'},{wert:45,name:'12 Monate B2B'},{wert:75,name:'Flexibel B2B'}]};
 const PAGE=50;
 
 // ---- DATA LOADING ----
@@ -423,7 +452,7 @@ setInterval(()=>loadData(false), 60000);
 loadData(true);
 
 // ---- NAV ----
-function nav(id,btn){document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));document.querySelectorAll('.hn').forEach(b=>b.classList.remove('active'));document.getElementById('sec-'+id).classList.add('active');btn.classList.add('active');if(id==='dash')renderDash();if(id==='liste'){lPage=0;renderList();}if(id==='ma')renderMA();if(id==='beitraege')renderPreise();if(id==='firmen')renderFirmen();if(id==='wellpass')renderWellpassFirmen();}
+function nav(id,btn){document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));document.querySelectorAll('.hn').forEach(b=>b.classList.remove('active'));document.getElementById('sec-'+id).classList.add('active');btn.classList.add('active');if(id==='dash')renderDash();if(id==='liste'){lPage=0;renderList();}if(id==='ma')renderMA();if(id==='beitraege')renderPreise();if(id==='firmen')renderFirmen();if(id==='wellpass')renderWellpassFirmen();if(id==='provision')renderProvision();}
 
 // ---- DASHBOARD ----
 function initDashTabs(){const tabs=document.getElementById('dtabs');tabs.innerHTML='';[['all','Alle Studios',''],['Bad Homburg','Bad Homburg','s-bh'],['Karben','Karben','s-ka'],['Rosbach','Rosbach','s-ro']].forEach(([val,label,cls])=>{const b=document.createElement('button');b.className='stab'+(cls?' '+cls:'')+(dashSt===val?' active':'');b.textContent=label;b.onclick=()=>{dashSt=val;document.querySelectorAll('#dtabs .stab').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderDash();};tabs.appendChild(b);});}
@@ -595,6 +624,52 @@ async function savePreise(){
 }
 async function addMA(){const val=document.getElementById('ma-new').value.trim();if(!val)return;if(!db.ma[maSt])db.ma[maSt]=[];if(!db.ma[maSt].includes(val)){db.ma[maSt].push(val);db.ma[maSt].sort();}document.getElementById('ma-new').value='';try{const rec=await readBin();rec.ma=db.ma;await writeBin(rec);}catch(e){}renderMA();}
 async function removeMA(name){if(!confirm(`"${name}" aus ${maSt} entfernen?`))return;db.ma[maSt]=(db.ma[maSt]||[]).filter(m=>m!==name);try{const rec=await readBin();rec.ma=db.ma;await writeBin(rec);}catch(e){}renderMA();}
+/* ===== PROVISION ===== */
+const STUDIO_TIER={'Bad Homburg':'Signature','Karben':'Classic','Rosbach':'Classic'};
+const PROV_RATES={Signature:{'24 Monate':15,'12 Monate':10,'Flexibel':5},Classic:{'24 Monate':10,'12 Monate':7,'Flexibel':3}};
+const TEAMLEITER=['Davide','Chiara','Marsha'];
+function isTeamleiter(ma){return TEAMLEITER.indexOf(ma)!==-1;}
+function provLaufzeit(pn){if(!pn)return null;if(pn.indexOf('B2B')!==-1)return null;if(pn.indexOf('24 Monate')!==-1)return '24 Monate';if(pn.indexOf('12 Monate')!==-1)return '12 Monate';if(pn.indexOf('Flexibel')!==-1)return 'Flexibel';return null;}
+function provIs14(pn){return !!pn&&pn.indexOf('14 Tage')!==-1;}
+function provRate(e){const lz=provLaufzeit(e.preisName);if(!lz)return 0;const t=STUDIO_TIER[e.studio];if(!t)return 0;return PROV_RATES[t][lz]||0;}
+function provEligible(e){return e.ergebnis==='JA'&&provRate(e)>0;}
+function provStatus(e){return e.prov14==='ok'?'ok':e.prov14==='storno'?'storno':'offen';}
+function provFillMonths(){const sel=document.getElementById('prov-mon');if(!sel)return;const cur=MONS_ALL[new Date().getMonth()];const val=sel.value||cur;sel.innerHTML='<option value="all">Alle Monate</option>'+MONS_ALL.map(m=>`<option value="${m}"${val===m?' selected':''}>${m}</option>`).join('');}
+function provAggregate(m){let ents=db.entries.filter(provEligible);if(m!=='all')ents=ents.filter(e=>e.monat===m);const byMa={};ents.forEach(e=>{const rate=provRate(e);const is14=provIs14(e.preisName);const st=provStatus(e);const key=e.ma||'—';if(!byMa[key])byMa[key]={ma:key,leiter:isTeamleiter(key),studios:new Set(),anz:0,best:0,offen:0};const r=byMa[key];r.studios.add(e.studio);if(!is14){r.best+=rate;r.anz++;}else if(st==='ok'){r.best+=rate;r.anz++;}else if(st==='offen'){r.offen+=rate;}});const rows=Object.values(byMa);rows.forEach(r=>{if(r.leiter){r.best=0;r.offen=0;}});return rows.sort((a,b)=>b.best-a.best||b.offen-a.offen);}
+function renderProvision(){
+  provFillMonths();
+  const m=document.getElementById('prov-mon').value;
+  const rows=provAggregate(m);
+  const totBest=rows.reduce((a,r)=>a+r.best,0),totOffen=rows.reduce((a,r)=>a+r.offen,0),totAnz=rows.reduce((a,r)=>a+(r.leiter?0:r.anz),0);
+  document.getElementById('prov-kpis').innerHTML=[
+    ['Bestätigte Provision',totBest.toLocaleString('de-DE')+' €','var(--green)'],
+    ['Offen · zu prüfen',totOffen.toLocaleString('de-DE')+' €','#E08600'],
+    ['Provisions-Abschlüsse',totAnz,'var(--text)']
+  ].map(([l,v,c])=>`<div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px"><div style="font-size:22px;font-weight:700;font-family:'DM Mono',monospace;color:${c}">${v}</div><div style="font-size:11px;color:var(--text3);margin-top:4px;text-transform:uppercase;letter-spacing:.3px">${l}</div></div>`).join('');
+  const tb=document.getElementById('prov-tb');
+  if(!rows.length){tb.innerHTML='<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text3);font-size:13px">Keine provisionsrelevanten Abschlüsse in diesem Monat.</td></tr>';}
+  else tb.innerHTML=rows.map(r=>{const studios=[...r.studios];const col=studios.length===1?STUDIO_COLS[studios[0]]:'var(--text2)';const nameCell=r.ma+(r.leiter?' <span style="font-size:11px;color:var(--text3);font-weight:600">(Teamleiter)</span>':'');const bestCell=r.leiter?'<span style="color:var(--text3);font-weight:500">ausgeschl.</span>':(r.best.toLocaleString('de-DE')+' €');const offenCell=r.leiter?'–':(r.offen?r.offen.toLocaleString('de-DE')+' €':'–');return `<tr${r.leiter?' style="opacity:.65"':''}><td style="font-weight:600">${nameCell}</td><td style="color:${col};font-weight:500">${studios.join(', ')}</td><td style="text-align:right;font-family:'DM Mono',monospace;font-size:13px">${r.anz}</td><td style="text-align:right;font-family:'DM Mono',monospace;font-size:13px;color:var(--green);font-weight:600">${bestCell}</td><td style="text-align:right;font-family:'DM Mono',monospace;font-size:13px;color:${r.offen&&!r.leiter?'#E08600':'var(--text3)'}">${offenCell}</td></tr>`;}).join('');
+  let l14=db.entries.filter(e=>provEligible(e)&&provIs14(e.preisName)&&!isTeamleiter(e.ma));
+  if(m!=='all')l14=l14.filter(e=>e.monat===m);
+  l14.sort((a,b)=>(a.datum||'').localeCompare(b.datum||''));
+  const t14=document.getElementById('prov14-tb');
+  if(!l14.length){t14.innerHTML='<tr><td colspan="8" style="text-align:center;padding:1.5rem;color:var(--text3);font-size:13px">Keine 14-Tage-Abschlüsse in diesem Monat.</td></tr>';}
+  else t14.innerHTML=l14.map(e=>{const rate=provRate(e);const st=provStatus(e);const col=STUDIO_COLS[e.studio]||'inherit';const stBadge=st==='ok'?'<span style="color:var(--green);font-weight:600">Zählt</span>':st==='storno'?'<span style="color:var(--red);font-weight:600">Storno</span>':'<span style="color:#E08600;font-weight:600">Offen</span>';return `<tr><td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text3)">${e.datum||'–'}</td><td style="font-weight:500">${e.name||'–'}</td><td style="color:var(--text2)">${e.ma||'–'}</td><td style="color:${col};font-weight:500">${e.studio}</td><td style="font-size:12px;color:var(--text2)">${e.preisName}</td><td style="text-align:right;font-family:'DM Mono',monospace;font-size:13px">${rate} €</td><td>${stBadge}</td><td style="white-space:nowrap"><button class="btn-edit" title="Provision zählt" onclick="setProv14('${e.id}','ok')">✓</button> <button class="btn-del" title="Storniert – keine Provision" onclick="setProv14('${e.id}','storno')">✕</button> <button class="btn-edit" title="Zurück auf offen" onclick="setProv14('${e.id}','offen')">↺</button></td></tr>`;}).join('');
+}
+async function setProv14(id,status){try{const rec=await readBin();const idx=rec.entries.findIndex(x=>String(x.id)===String(id));if(idx===-1)return;if(status==='offen')delete rec.entries[idx].prov14;else rec.entries[idx].prov14=status;await writeBin(rec);db.entries=rec.entries;renderProvision();}catch(e){alert('Verbindungsfehler.');}}
+function exportProvisionCSV(){
+  const m=document.getElementById('prov-mon').value;
+  const rows=provAggregate(m);
+  const esc=v=>{v=String(v);return /[";\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+  const head=['Monat','Mitarbeiter','Rolle','Studio','Tarif','Abschlüsse','Bestätigte Provision brutto (€)','Offen 14-Tage brutto (€)'];
+  const lines=[head.join(';')];
+  rows.forEach(r=>{const studios=[...r.studios];const tset=[...new Set(studios.map(s=>STUDIO_TIER[s]))].join('/');const rolle=r.leiter?'Teamleiter (ausgeschlossen)':'Trainer';lines.push([m==='all'?'Alle':m,r.ma,rolle,studios.join(', '),tset,r.anz,r.best,r.offen].map(esc).join(';'));});
+  const tBest=rows.reduce((a,r)=>a+r.best,0),tOffen=rows.reduce((a,r)=>a+r.offen,0),tAnz=rows.reduce((a,r)=>a+r.anz,0);
+  lines.push(['','GESAMT','','','',tAnz,tBest,tOffen].map(esc).join(';'));
+  const csv='\uFEFF'+lines.join('\r\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});const url=URL.createObjectURL(blob);const a=document.createElement('a');
+  a.href=url;a.download='provision_'+(m==='all'?'alle':m)+'.csv';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+}
 </script>
 
 <!-- PPTX EXPORT MODAL -->

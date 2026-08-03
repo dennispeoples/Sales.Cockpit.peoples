@@ -157,6 +157,9 @@
        <button class="preis-btn" onclick="selectPreis(0,this)"><span class="preis-euro" id="lbl-preis-0">45 €</span><span class="preis-label" id="lbl-name-0">24 Monate</span></button>
        <button class="preis-btn" onclick="selectPreis(1,this)"><span class="preis-euro" id="lbl-preis-1">65 €</span><span class="preis-label" id="lbl-name-1">12 Monate</span></button>
        <button class="preis-btn active" onclick="selectPreis(2,this)"><span class="preis-euro" id="lbl-preis-2">75 €</span><span class="preis-label" id="lbl-name-2">Flexibel</span></button>
+       <button class="preis-btn" onclick="selectPreis(3,this)"><span class="preis-euro" id="lbl-preis-3">–</span><span class="preis-label" id="lbl-name-3">24 Monate (14 Tage Gratis Training)</span></button>
+       <button class="preis-btn" onclick="selectPreis(4,this)"><span class="preis-euro" id="lbl-preis-4">–</span><span class="preis-label" id="lbl-name-4">12 Monate (14 Tage Gratis Training)</span></button>
+       <button class="preis-btn" onclick="selectPreis(5,this)"><span class="preis-euro" id="lbl-preis-5">–</span><span class="preis-label" id="lbl-name-5">Flexibel (14 Tage Gratis Training)</span></button>
      </div>
      <div style="display:flex;align-items:center;gap:8px;margin:8px 0 6px">
        <div style="flex:1;height:1px;background:var(--border)"></div>
@@ -164,8 +167,8 @@
        <div style="flex:1;height:1px;background:var(--border)"></div>
      </div>
      <div class="preis-grid" style="grid-template-columns:1fr 1fr">
-       <button class="preis-btn" onclick="selectPreis(3,this)"><span class="preis-euro" id="lbl-preis-3">55 €</span><span class="preis-label" id="lbl-name-3">12 Monate B2B</span></button>
-       <button class="preis-btn" onclick="selectPreis(4,this)"><span class="preis-euro" id="lbl-preis-4">85 €</span><span class="preis-label" id="lbl-name-4">Flexibel B2B</span></button>
+       <button class="preis-btn" onclick="selectPreis(6,this)"><span class="preis-euro" id="lbl-preis-6">55 €</span><span class="preis-label" id="lbl-name-6">12 Monate B2B</span></button>
+       <button class="preis-btn" onclick="selectPreis(7,this)"><span class="preis-euro" id="lbl-preis-7">85 €</span><span class="preis-label" id="lbl-name-7">Flexibel B2B</span></button>
      </div>
    </div>
    <div id="grund-section" class="grund-section">
@@ -204,7 +207,7 @@
 <script>
 const STUDIO='Bad Homburg';
 const DEFAULT_MA={'Bad Homburg':['Davide','Connor','Malte','Lisa','Miquel','Malcom','Freddi','Dennis','Nina','Milena','Nickson','Daniel','Kurs'],'Karben':['Phillip','Mika','Sammy','Jonas','Chiara','Marc','Marsha','Daniel','Ryan','Connor','Kurs'],'Rosbach':['Tobias','Julia','Ryan','Philip','Maurice','Pascal','Malcom','Chiara','Kurs']};
-const DEFAULT_PREISE=[{wert:45,name:'24 Monate'},{wert:65,name:'12 Monate'},{wert:75,name:'Flexibel'},{wert:55,name:'12 Monate B2B'},{wert:85,name:'Flexibel B2B'}];
+const DEFAULT_PREISE=[{wert:45,name:'24 Monate'},{wert:65,name:'12 Monate'},{wert:75,name:'Flexibel'},{wert:45,name:'24 Monate (14 Tage Gratis Training)'},{wert:65,name:'12 Monate (14 Tage Gratis Training)'},{wert:75,name:'Flexibel (14 Tage Gratis Training)'},{wert:55,name:'12 Monate B2B'},{wert:85,name:'Flexibel B2B'}];
 
 const API_KEY = '$2a$10$FOEYQP0GOS7RLF9b5d4/HebX6g7yEFwhYU7kN9vocgiyD5a8dp1qG';
 const JSONBIN_URL = 'https://api.jsonbin.io/v3/b';
@@ -238,7 +241,7 @@ async function writeBin(record) {
 let preise=JSON.parse(JSON.stringify(DEFAULT_PREISE)),selectedPreisIdx=2;
 let companies=[];
 function renderCompanyList(){const dl=document.getElementById('company-list');if(dl)dl.innerHTML=companies.map(c=>`<option value="${c.replace(/"/g,'&quot;')}"></option>`).join('');}
-function renderPreisButtons(){for(let i=0;i<5;i++){const e=document.getElementById('lbl-preis-'+i),n=document.getElementById('lbl-name-'+i);if(e)e.textContent=preise[i].wert+' €';if(n)n.textContent=preise[i].name;}}
+function renderPreisButtons(){for(let i=0;i<8;i++){const e=document.getElementById('lbl-preis-'+i),n=document.getElementById('lbl-name-'+i);if(e)e.textContent=preise[i].wert+' €';if(n)n.textContent=preise[i].name;}}
 function selectPreis(idx,btn){selectedPreisIdx=idx;document.querySelectorAll('.preis-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
 let selectedTyp='Probetraining',selectedErgebnis='JA';
 const now=new Date();
